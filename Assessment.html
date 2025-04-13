@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRC Insight - Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Optional: Customize Tailwind theme if needed
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], // Use Inter font
+                    },
+                    colors: {
+                        primary: {
+                            light: '#60a5fa', // blue-400
+                            DEFAULT: '#2563eb', // blue-600
+                            dark: '#1d4ed8', // blue-800
+                        },
+                        secondary: '#f3f4f6', // gray-100
+                        accent: '#10b981', // emerald-500
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Basic styling for scrollbars and transitions */
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #9ca3af; /* gray-400 */
+            border-radius: 20px;
+        }
+        .content-section {
+            display: none; /* Hide sections by default */
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .content-section.active {
+            display: block; /* Show active section */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .sidebar-link {
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .sidebar-link.active, .sidebar-link:hover {
+            background-color: #dbeafe; /* blue-100 */
+            color: #1e3a8a; /* blue-900 */
+            font-weight: 600;
+        }
+         /* Style for tables */
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* gray-200 */
+        }
+        th {
+            background-color: #f9fafb; /* gray-50 */
+            font-weight: 600;
+            color: #374151; /* gray-700 */
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        tr:hover {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        /* Status badge styles */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 9999px; /* pill shape */
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .status-high { background-color: #fee2e2; color: #b91c1c; } /* red */
+        .status-medium { background-color: #fef3c7; color: #b45309; } /* amber */
+        .status-low { background-color: #d1fae5; color: #065f46; } /* emerald */
+        .status-compliant { background-color: #d1fae5; color: #065f46; } /* emerald */
+        .status-non-compliant { background-color: #fee2e2; color: #b91c1c; } /* red */
+        .status-pending { background-color: #e0e7ff; color: #3730a3; } /* indigo */
+        .status-inprogress { background-color: #ccfbf1; color: #0f766e; } /* teal */
+        .status-completed { background-color: #dcfce7; color: #166534; } /* green */
+        .status-open { background-color: #fef9c3; color: #a16207; } /* yellow */
+        .status-closed { background-color: #e5e7eb; color: #4b5563; } /* gray */
+
+        /* Card styles */
+        .card {
+            background-color: white;
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+            padding: 1.5rem; /* p-6 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+
+        .card-title {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600;
+            color: #1f2937; /* gray-800 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+
+        /* Form input styling */
+        label {
+            display: block;
+            margin-bottom: 0.5rem; /* mb-2 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500;
+            color: #374151; /* gray-700 */
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="url"],
+        select, /* Added select styling */
+        textarea {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem; /* py-2 px-3 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            font-size: 0.875rem; /* text-sm */
+            color: #1f2937; /* gray-800 */
+            line-height: 1.5;
+            background-color: white; /* Ensure select background is white */
+        }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="url"]:focus,
+        select:focus, /* Added select focus styling */
+        textarea:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: #2563eb; /* primary color */
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5); /* ring-primary */
+        }
+        textarea {
+            min-height: 80px;
+        }
+        .form-section-title {
+            font-size: 1rem; /* text-base */
+            font-weight: 600;
+            color: #111827; /* gray-900 */
+            padding-bottom: 0.5rem; /* pb-2 */
+            border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
+            margin-bottom: 1rem; /* mb-4 */
+            margin-top: 1.5rem; /* mt-6 */
+        }
+        /* Checkbox styling */
+         input[type="checkbox"] {
+            height: 1rem; /* h-4 */
+            width: 1rem; /* w-4 */
+            border-radius: 0.25rem; /* rounded */
+            border-color: #d1d5db; /* border-gray-300 */
+            color: #2563eb; /* text-primary */
+        }
+        input[type="checkbox"]:focus {
+             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5); /* ring-primary */
+             border-color: #2563eb; /* primary color */
+             outline: none;
+        }
+        fieldset legend {
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500;
+            color: #374151; /* gray-700 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        fieldset .flex { /* Ensure checkbox and label align well */
+            align-items: center;
+        }
+        fieldset label { /* Adjust label margin for checkboxes */
+             margin-bottom: 0;
+             margin-left: 0.75rem; /* ml-3 */
+             color: #111827; /* gray-900 */
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
+            width: 90%;
+            max-width: 500px; /* Limit modal width */
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease-in-out;
+        }
+         .modal-overlay.active .modal-content {
+             transform: scale(1);
+         }
+        .modal-title {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600;
+            color: #1f2937; /* gray-800 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .modal-body textarea {
+            min-height: 150px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            background-color: #f9fafb; /* gray-50 */
+        }
+    </style>
+</head>
+<body class="bg-secondary">
+
+    <div class="flex h-screen">
+        <aside class="w-64 bg-white shadow-md flex flex-col sidebar overflow-y-auto">
+            <div class="p-6 border-b flex items-center justify-center">
+                 <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <h1 class="text-xl font-bold text-gray-800 ml-2">VELTRIX</h1>
+            </div>
+
+            <nav class="flex-1 px-4 py-4 space-y-2">
+                <a href="#" data-target="dashboard" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md active">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                </a>
+                <a href="#" data-target="risk" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Risk Management
+                </a>
+                <a href="#" data-target="compliance" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
+                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Compliance
+                </a>
+                <a href="#" data-target="audit" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    Audit Management
+                </a>
+                <a href="#" data-target="vendor" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md"> <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Vendor Assessment
+                </a>
+                 <a href="#" data-target="policy" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Policy Management
+                </a>
+                 <a href="#" data-target="reports" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Reporting
+                </a>
+            </nav>
+
+             <div class="p-4 border-t mt-auto">
+                <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Settings
+                </a>
+                 <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-6 lg:p-10 overflow-y-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 bg-white rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    </button>
+                    <div class="relative">
+                        <img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/E2E8F0/4A5568?text=User" alt="User avatar" onerror="this.src='https://placehold.co/100x100/E2E8F0/4A5568?text=User'; this.onerror=null;">
+                        <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard" class="content-section active">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="card">
+                        <h3 class="card-title">Key Risk Indicators</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">IT System Downtime</span>
+                                <span class="status-badge status-low">Low</span>
+                            </div>
+                             <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Data Breach Incidents</span>
+                                <span class="status-badge status-medium">Medium</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Project Overruns</span>
+                                <span class="status-badge status-high">High</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Compliance Status</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">ISO 27001</span>
+                                <span class="status-badge status-compliant">Compliant</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">GDPR</span>
+                                <span class="status-badge status-pending">Pending Review</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">SOX</span>
+                                <span class="status-badge status-non-compliant">Non-Compliant</span>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="card">
+                        <h3 class="card-title">Audit Schedule</h3>
+                         <p class="text-gray-500 text-sm">Upcoming Audits:</p>
+                        <ul class="mt-2 space-y-2 text-sm">
+                            <li class="flex justify-between"><span>IT General Controls</span> <span class="text-gray-500">Apr 25, 2025</span></li>
+                            <li class="flex justify-between"><span>Financial Statement Audit</span> <span class="text-gray-500">May 10, 2025</span></li>
+                            <li class="flex justify-between"><span>Vendor Risk Assessment</span> <span class="text-gray-500">Jun 01, 2025</span></li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="card">
+                     <h3 class="card-title">Risk Heatmap (Placeholder)</h3>
+                     <div class="bg-gray-200 h-48 flex items-center justify-center rounded-md text-gray-500">
+                         Risk Heatmap Visualization - Future Implementation
+                     </div>
+                 </div>
+            </div>
+
+            <div id="risk" class="content-section">
+                 <div class="card">
+                    <div class="flex justify-between items-center mb-4">
+                         <h3 class="card-title mb-0">Risk Register</h3>
+                         <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition duration-200 text-sm font-medium">Add New Risk</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr>
+                                    <th>Risk ID</th>
+                                    <th>Risk Name</th>
+                                    <th>Category</th>
+                                    <th>Risk Score</th>
+                                    <th>Status</th>
+                                    <th>Owner</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="risk-table-body">
+                                </tbody>
+                        </table>
+                    </div>
+                 </div>
+                 <div class="card mt-6">
+                     <h3 class="card-title">Risk Heatmap (Placeholder)</h3>
+                     <div class="bg-gray-200 h-64 flex items-center justify-center rounded-md text-gray-500">
+                         Interactive Risk Heatmap Visualization - Future Implementation
+                     </div>
+                 </div>
+            </div>
+
+            <div id="compliance" class="content-section">
+                 <div class="card">
+                    <h3 class="card-title">Compliance Overview</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Regulations & Standards</h4>
+                            <ul id="compliance-list" class="space-y-2">
+                                </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Compliance Tasks Due</h4>
+                             <p class="text-gray-500 text-sm">(Placeholder)</p>
+                             <ul class="mt-2 space-y-2 text-sm">
+                                <li class="flex justify-between"><span>GDPR Assessment</span> <span class="text-red-600">Overdue</span></li>
+                                <li class="flex justify-between"><span>ISO Policy Review</span> <span class="text-gray-500">Due Apr 30</span></li>
+                                <li class="flex justify-between"><span>SOX Control Test</span> <span class="text-gray-500">Due May 15</span></li>
+                             </ul>
+                        </div>
+                    </div>
+                </div>
+                 <div class="card mt-6">
+                     <h3 class="card-title">Compliance Assessment (Placeholder)</h3>
+                     <div class="bg-gray-200 h-40 flex items-center justify-center rounded-md text-gray-500">
+                         Compliance Assessment Checklist / Control Testing Interface - Future Implementation
+                     </div>
+                 </div>
+            </div>
+
+            <div id="audit" class="content-section">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-4">
+                         <h3 class="card-title mb-0">Audit Plan & Findings</h3>
+                         <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition duration-200 text-sm font-medium">Schedule New Audit</button>
+                    </div>
+                     <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr>
+                                    <th>Audit ID</th>
+                                    <th>Audit Name</th>
+                                    <th>Status</th>
+                                    <th>Findings (Open)</th>
+                                    <th>Due Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-table-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vendor" class="content-section">
+                <div class="card">
+                    <h3 class="card-title">New Vendor Assessment / Onboarding</h3>
+
+                    <form id="vendor-assessment-form" action="#" method="POST">
+                        <h4 class="form-section-title">Vendor Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="vendor-name">Vendor's Name*</label>
+                                <input type="text" id="vendor-name" name="vendor-name" required>
+                            </div>
+                            <div>
+                                <label for="vendor-legal-name">Legal Name of the Vendor*</label>
+                                <input type="text" id="vendor-legal-name" name="vendor-legal-name" required>
+                            </div>
+                            <div>
+                                <label for="vendor-website">Vendor's Website / Domain Name*</label>
+                                <input type="url" id="vendor-website" name="vendor-website" placeholder="https://example.com" required>
+                            </div>
+                            <div>
+                                <label for="vendor-address">Complete address of the Vendor*</label>
+                                <textarea id="vendor-address" name="vendor-address" rows="3" required></textarea>
+                            </div>
+                        </div>
+
+                        <h4 class="form-section-title">Vendor SPOC & Services Details</h4>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="vendor-spoc-name">Vendor Spoc's Name*</label>
+                                <input type="text" id="vendor-spoc-name" name="vendor-spoc-name" required>
+                            </div>
+                             <div>
+                                <label for="vendor-spoc-position">Vendor Spoc's Position*</label>
+                                <input type="text" id="vendor-spoc-position" name="vendor-spoc-position" required>
+                            </div>
+                            <div>
+                                <label for="vendor-spoc-phone">Vendor Spoc's Phone number*</label>
+                                <input type="tel" id="vendor-spoc-phone" name="vendor-spoc-phone" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="vendor-service-desc">Please provide a detailed brief description of the service provided by the vendor*</label>
+                                <textarea id="vendor-service-desc" name="vendor-service-desc" rows="4" required></textarea>
+                            </div>
+                        </div>
+
+                         <h4 class="form-section-title">Vendor Service Hosting Details</h4>
+                          <div>
+                                <label for="vendor-hosting-details">Vendor Service Hosting Details*</label>
+                                <input type="text" id="vendor-hosting-details" name="vendor-hosting-details" required>
+                          </div>
+
+                         <h4 class="form-section-title">Vendor On-Boarding Initiating Department</h4>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div>
+                                <label for="business-spoc-name">Business SPOC Name*</label>
+                                <input type="text" id="business-spoc-name" name="business-spoc-name" required>
+                            </div>
+                             <div>
+                                <label for="reporting-manager-name">Reporting Manager Name*</label>
+                                <input type="text" id="reporting-manager-name" name="reporting-manager-name" required>
+                            </div>
+                             <div>
+                                <label for="business-spoc-email">Business SPOC Email ID*</label>
+                                <input type="email" id="business-spoc-email" name="business-spoc-email" required>
+                            </div>
+                            <div>
+                                <label for="reporting-manager-email">Reporting Manager Email ID*</label>
+                                <input type="email" id="reporting-manager-email" name="reporting-manager-email" required>
+                            </div>
+                             <div>
+                                <label for="business-spoc-dept">Business SPOC Department*</label>
+                                <input type="text" id="business-spoc-dept" name="business-spoc-dept" required>
+                            </div>
+                             <div>
+                                <label for="dept-head-name">Department Head Name*</label>
+                                <input type="text" id="dept-head-name" name="dept-head-name" required>
+                            </div>
+                             <div>
+                                <label for="business-spoc-phone">Business SPOC Phone number*</label>
+                                <input type="tel" id="business-spoc-phone" name="business-spoc-phone" required>
+                            </div>
+                             <div>
+                                <label for="dept-head-email">Department Head Email ID*</label>
+                                <input type="email" id="dept-head-email" name="dept-head-email" required>
+                            </div>
+                         </div>
+
+                        <h4 class="form-section-title">Service & Integration Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label for="service-type">Primary Service Type*</label>
+                                <select id="service-type" name="service-type" required class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                    <option value="">-- Select Service Type --</option>
+                                    <option value="saas">SaaS Application</option>
+                                    <option value="paas">PaaS Platform</option>
+                                    <option value="iaas">IaaS Infrastructure</option>
+                                    <option value="prof_services">Professional Services / Consulting</option>
+                                    <option value="managed_service">Managed Service Provider</option>
+                                    <option value="bpo">Business Process Outsourcing (BPO)</option>
+                                    <option value="hardware">Hardware Supplier</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <input type="text" id="service-type-other" name="service-type-other" placeholder="Specify other service type" class="mt-2 hidden"> </div>
+                            <div>
+                                <label for="integration-method">Primary Integration Method*</label>
+                                <select id="integration-method" name="integration-method" required class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                    <option value="">-- Select Integration --</option>
+                                    <option value="api_rest">API (REST)</option>
+                                    <option value="api_soap">API (SOAP)</option>
+                                    <option value="sftp">SFTP/FTP</option>
+                                    <option value="db_conn">Direct Database Connection</option>
+                                    <option value="manual_file">Manual File Exchange</option>
+                                    <option value="sso">Single Sign-On (SSO)</option>
+                                    <option value="vpn">Site-to-Site VPN</option>
+                                    <option value="no_integration">No Technical Integration</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <input type="text" id="integration-method-other" name="integration-method-other" placeholder="Specify other integration" class="mt-2 hidden"> </div>
+                             <div>
+                                <label for="data-flow-direction">Primary Data Flow Direction*</label>
+                                <select id="data-flow-direction" name="data-flow-direction" required class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                    <option value="">-- Select Direction --</option>
+                                    <option value="company_to_vendor">Company -> Vendor</option>
+                                    <option value="vendor_to_company">Vendor -> Company</option>
+                                    <option value="bidirectional">Bi-directional</option>
+                                    <option value="na">Not Applicable</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h4 class="form-section-title">Data Handling & Security</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                            <fieldset>
+                                <legend>Types of Data Accessed/Processed/Stored* (Select all that apply)</legend>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input id="data-type-pii" name="data_type" type="checkbox" value="pii">
+                                        <label for="data-type-pii">Personal Data (PII/SPI)</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="data-type-financial" name="data_type" type="checkbox" value="financial">
+                                        <label for="data-type-financial">Financial Data (Incl. Cardholder Data)</label>
+                                    </div>
+                                     <div class="flex items-center">
+                                        <input id="data-type-health" name="data_type" type="checkbox" value="health">
+                                        <label for="data-type-health">Health Information (PHI)</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="data-type-ip" name="data_type" type="checkbox" value="ip">
+                                        <label for="data-type-ip">Intellectual Property / Confidential Business Info</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="data-type-operational" name="data_type" type="checkbox" value="operational">
+                                        <label for="data-type-operational">Operational Data</label>
+                                    </div>
+                                     <div class="flex items-center">
+                                        <input id="data-type-public" name="data_type" type="checkbox" value="public">
+                                        <label for="data-type-public">Public Data Only</label>
+                                    </div>
+                                     <div class="flex items-center">
+                                        <input id="data-type-none" name="data_type" type="checkbox" value="none">
+                                        <label for="data-type-none">No Company Data Involved</label>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <div> <div class="mb-4">
+                                    <label for="data-classification-max">Highest Data Classification Involved*</label>
+                                    <select id="data-classification-max" name="data-classification-max" required>
+                                        <option value="">-- Select Classification --</option>
+                                        <option value="public">Public</option>
+                                        <option value="internal">Internal Use Only</option>
+                                        <option value="confidential">Confidential</option>
+                                        <option value="restricted">Restricted / Sensitive</option>
+                                        <option value="na">Not Applicable (No Data)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="data-residency">Primary Data Residency/Hosting Location*</label>
+                                     <select id="data-residency" name="data-residency" required>
+                                        <option value="">-- Select Location --</option>
+                                        <option value="india">India</option>
+                                        <option value="eu">EU</option>
+                                        <option value="usa">USA</option>
+                                        <option value="apac">APAC (excl. India)</option>
+                                        <option value="global">Global / Multiple Regions</option>
+                                        <option value="vendor_infra">On Vendor Premises</option>
+                                         <option value="company_infra">On Company Premises</option>
+                                        <option value="na">Not Applicable</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="form-section-title">Vendor Profile & Criticality</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label for="vendor-profile-type">Vendor Type*</label>
+                                <select id="vendor-profile-type" name="vendor-profile-type" required>
+                                    <option value="">-- Select Type --</option>
+                                    <option value="software">Software Provider</option>
+                                    <option value="cloud">Cloud Service Provider (CSP)</option>
+                                    <option value="managed">Managed Service Provider (MSP)</option>
+                                    <option value="consultant">Consultant / Professional Services</option>
+                                    <option value="hardware">Hardware Supplier</option>
+                                    <option value="bpo">Business Process Outsourcing (BPO)</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <input type="text" id="vendor-profile-type-other" name="vendor-profile-type-other" placeholder="Specify other vendor type" class="mt-2 hidden"> </div>
+                            <div>
+                                <label for="vendor-profile-criticality">Vendor Criticality Assessment*</label>
+                                <select id="vendor-profile-criticality" name="vendor-profile-criticality" required>
+                                    <option value="">-- Select Criticality --</option>
+                                    <option value="critical">Critical (Tier 1 - Major disruption if unavailable)</option>
+                                    <option value="high">High (Tier 2 - Significant impact)</option>
+                                    <option value="medium">Medium (Tier 3 - Moderate impact)</option>
+                                    <option value="low">Low (Tier 4 - Minimal impact)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h4 class="form-section-title">Compliance & Audit Information</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                             <fieldset>
+                                <legend>Relevant Certifications / Compliance (Select all that apply)</legend>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input id="cert-iso27001" name="certifications" type="checkbox" value="iso27001">
+                                        <label for="cert-iso27001">ISO 27001</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="cert-soc2" name="certifications" type="checkbox" value="soc2">
+                                        <label for="cert-soc2">SOC 2 (Type I or II)</label>
+                                    </div>
+                                     <div class="flex items-center">
+                                        <input id="cert-pci" name="certifications" type="checkbox" value="pci">
+                                        <label for="cert-pci">PCI DSS</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="cert-hipaa" name="certifications" type="checkbox" value="hipaa">
+                                        <label for="cert-hipaa">HIPAA Compliance</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="cert-gdpr" name="certifications" type="checkbox" value="gdpr">
+                                        <label for="cert-gdpr">GDPR Compliance</label>
+                                    </div>
+                                     <div class="flex items-center">
+                                        <input id="cert-other" name="certifications" type="checkbox" value="other">
+                                        <label for="cert-other">Other (Specify Below)</label>
+                                    </div>
+                                     <input type="text" id="cert-other-details" name="cert-other-details" placeholder="Specify other certifications" class="mt-2 text-sm">
+                                </div>
+                            </fieldset>
+                            <div>
+                                <label for="audit-summary-details">Audit Summary / Key Findings (Optional)</label>
+                                <textarea id="audit-summary-details" name="audit-summary-details" rows="6" placeholder="Provide a brief summary of recent relevant audit reports (e.g., SOC 2 report date, scope, key exceptions) or attach reports if applicable."></textarea>
+                                <p class="mt-1 text-xs text-gray-500">Link to upload audit reports would be added in a full implementation.</p>
+                            </div>
+                        </div>
+                        <h4 class="form-section-title">Additional Assessment Questions (Placeholder)</h4>
+                        <p class="text-gray-500 mb-4">More detailed assessment questions (e.g., security controls, data handling practices, business continuity plans) would be added here.</p>
+                        <div class="bg-gray-100 p-4 rounded-md text-center text-gray-500">
+                            Further assessment fields to be added based on requirements.
+                        </div>
+
+                        <div class="mt-8 pt-5 border-t border-gray-200">
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark">
+                                    Cancel
+                                </button>
+                                <button type="button" id="save-assessment-button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark">
+                                    Save Assessment
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div id="policy" class="content-section">
+                 <div class="card">
+                    <div class="flex justify-between items-center mb-4">
+                         <h3 class="card-title mb-0">Policy Library</h3>
+                         <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition duration-200 text-sm font-medium">Upload New Policy</button>
+                    </div>
+                     <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead>
+                                <tr>
+                                    <th>Policy ID</th>
+                                    <th>Title</th>
+                                    <th>Version</th>
+                                    <th>Owner</th>
+                                    <th>Status</th>
+                                    <th>Next Review</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="policy-table-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+             <div id="reports" class="content-section">
+                 <div class="card">
+                    <h3 class="card-title">Reporting Center</h3>
+                    <p class="text-gray-600 mb-6">Generate standard or create custom GRC reports.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
+                            <h4 class="font-semibold text-gray-700">Risk Summary Report</h4>
+                            <p class="text-sm text-gray-500 mt-1">Overview of top risks and mitigation status.</p>
+                        </button>
+                         <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
+                            <h4 class="font-semibold text-gray-700">Compliance Status Report</h4>
+                            <p class="text-sm text-gray-500 mt-1">Detailed compliance against selected regulations.</p>
+                        </button>
+                         <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
+                            <h4 class="font-semibold text-gray-700">Audit Findings Report</h4>
+                            <p class="text-sm text-gray-500 mt-1">Summary of open and closed audit findings.</p>
+                        </button>
+                         <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
+                            <h4 class="font-semibold text-gray-700">Policy Acknowledgement</h4>
+                            <p class="text-sm text-gray-500 mt-1">Track employee policy acknowledgements.</p>
+                        </button>
+                         <button class="bg-accent text-white p-4 rounded-md border border-transparent hover:shadow-lg hover:bg-emerald-600 transition duration-200 text-left">
+                            <h4 class="font-semibold">Custom Report Builder</h4>
+                            <p class="text-sm text-emerald-100 mt-1">Create your own report (Future Implementation).</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="email-summary-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                 <h3 class="modal-title">Send Assessment Summary</h3>
+                 <button id="close-modal-button" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="modal-body space-y-4">
+                <p class="text-sm text-gray-600">Assessment data prepared. Enter recipient email address and click send.</p>
+                <div>
+                    <label for="recipient-email" class="text-sm font-medium text-gray-700">Recipient Email Address*</label>
+                    <input type="email" id="recipient-email" name="recipient-email" required class="mt-1">
+                </div>
+                 <div>
+                    <label for="summary-preview" class="text-sm font-medium text-gray-700">Summary Preview (Read Only)</label>
+                    <textarea id="summary-preview" readonly class="mt-1 w-full h-40 border border-gray-300 rounded-md p-2 text-xs bg-gray-50"></textarea>
+                </div>
+                 <div class="flex justify-end space-x-3 pt-4 border-t">
+                     <button type="button" id="cancel-modal-button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="button" id="send-email-button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-accent hover:bg-emerald-700">
+                        Send Summary via Email
+                    </button>
+                 </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // --- Mock Data ---
+        const mockRisks = [
+            { id: 'R001', name: 'Unauthorized Access', category: 'Cybersecurity', score: 16, status: 'High', owner: 'IT Security' },
+            { id: 'R002', name: 'Vendor Supply Chain Disruption', category: 'Operational', score: 12, status: 'Medium', owner: 'Procurement' },
+            { id: 'R003', name: 'Regulatory Changes', category: 'Compliance', score: 9, status: 'Medium', owner: 'Legal' },
+            { id: 'R004', name: 'Data Loss/Leakage', category: 'Cybersecurity', score: 20, status: 'High', owner: 'IT Security' },
+            { id: 'R005', name: 'Employee Misconduct', category: 'HR', score: 6, status: 'Low', owner: 'Human Resources' },
+            { id: 'R006', name: 'Financial Misstatement', category: 'Financial', score: 15, status: 'High', owner: 'Finance Dept.' },
+        ];
+
+        const mockComplianceItems = [
+            { regulation: 'ISO 27001:2022', status: 'Compliant', dueDate: 'N/A' },
+            { regulation: 'GDPR', status: 'Pending Review', dueDate: '2025-04-30' },
+            { regulation: 'SOX Act', status: 'Non-Compliant', dueDate: 'N/A' },
+            { regulation: 'PCI DSS v4.0', status: 'In Progress', dueDate: '2025-06-15' },
+            { regulation: 'Internal Code of Conduct', status: 'Compliant', dueDate: 'N/A' },
+        ];
+
+         const mockAudits = [
+            { id: 'A001', name: 'IT General Controls Q1', status: 'Completed', findings: 0, dueDate: '2025-03-31' },
+            { id: 'A002', name: 'Financial Statement Audit FY24', status: 'In Progress', findings: 2, dueDate: '2025-05-10' },
+            { id: 'A003', name: 'Vendor Risk Assessment (High Tier)', status: 'Planned', findings: 0, dueDate: '2025-06-01' },
+            { id: 'A004', name: 'Business Continuity Plan Test', status: 'Completed', findings: 1, dueDate: '2025-02-28' },
+         ];
+
+         const mockPolicies = [
+            { id: 'POL001', title: 'Information Security Policy', version: '3.1', owner: 'CISO', status: 'Active', reviewDate: '2025-10-01' },
+            { id: 'POL002', title: 'Code of Conduct', version: '2.0', owner: 'HR', status: 'Active', reviewDate: '2026-01-15' },
+            { id: 'POL003', title: 'Data Privacy Policy', version: '1.5', owner: 'DPO', status: 'Active', reviewDate: '2025-07-01' },
+            { id: 'POL004', title: 'Remote Work Policy', version: '1.0', owner: 'HR', status: 'Draft', reviewDate: '2025-05-20' },
+         ];
+
+        // --- Helper Functions ---
+        function getStatusBadgeClass(status) {
+            if (!status) return 'status-low'; // Default if status is undefined/null
+            status = status.toLowerCase();
+            if (status.includes('high') || status.includes('non-compliant')) return 'status-high';
+            if (status.includes('medium') || status.includes('pending') || status.includes('draft')) return 'status-medium';
+            if (status.includes('low') || status.includes('compliant') || status.includes('active') || status.includes('completed')) return 'status-low'; // Use low for compliant/active too
+            if (status.includes('in progress')) return 'status-inprogress';
+            if (status.includes('planned')) return 'status-pending'; // Use pending for planned
+            if (status.includes('open')) return 'status-open';
+            if (status.includes('closed')) return 'status-closed';
+            return 'status-low'; // Default
+        }
+
+        function createActionButtons() {
+             // Simple placeholder action buttons
+            return `
+                <button class="text-primary hover:text-primary-dark text-xs font-medium mr-2">View</button>
+                <button class="text-gray-500 hover:text-gray-700 text-xs font-medium">Edit</button>
+            `;
+        }
+
+        // --- Populate Data Functions ---
+        function populateRiskTable() {
+            const tableBody = document.getElementById('risk-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = ''; // Clear existing rows
+            mockRisks.forEach(risk => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${risk.id}</td>
+                    <td>${risk.name}</td>
+                    <td>${risk.category}</td>
+                    <td>${risk.score}</td>
+                    <td><span class="status-badge ${getStatusBadgeClass(risk.status)}">${risk.status}</span></td>
+                    <td>${risk.owner}</td>
+                    <td>${createActionButtons()}</td>
+                `;
+            });
+        }
+
+        function populateComplianceList() {
+            const list = document.getElementById('compliance-list');
+             if (!list) return;
+            list.innerHTML = ''; // Clear existing items
+            mockComplianceItems.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center text-sm';
+                li.innerHTML = `
+                    <span>${item.regulation}</span>
+                    <span class="status-badge ${getStatusBadgeClass(item.status)}">${item.status}</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function populateAuditTable() {
+            const tableBody = document.getElementById('audit-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = ''; // Clear existing rows
+            mockAudits.forEach(audit => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${audit.id}</td>
+                    <td>${audit.name}</td>
+                    <td><span class="status-badge ${getStatusBadgeClass(audit.status)}">${audit.status}</span></td>
+                    <td>${audit.findings}</td>
+                    <td>${audit.dueDate}</td>
+                    <td>${createActionButtons()}</td>
+                `;
+            });
+        }
+
+         function populatePolicyTable() {
+            const tableBody = document.getElementById('policy-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = ''; // Clear existing rows
+            mockPolicies.forEach(policy => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${policy.id}</td>
+                    <td>${policy.title}</td>
+                    <td>${policy.version}</td>
+                    <td>${policy.owner}</td>
+                     <td><span class="status-badge ${getStatusBadgeClass(policy.status)}">${policy.status}</span></td>
+                    <td>${policy.reviewDate}</td>
+                    <td>${createActionButtons()}</td>
+                `;
+            });
+        }
+
+        // --- NEW: Vendor Assessment Form Logic ---
+        let currentAssessmentSummary = ''; // Store summary for mailto link
+
+        // Function to gather form data
+        function getVendorFormData() {
+            const form = document.getElementById('vendor-assessment-form');
+            if (!form) return null;
+
+            const formData = new FormData(form);
+            const data = {};
+            const dataTypes = []; // Handle checkboxes
+            const certifications = []; // Handle checkboxes
+
+            for (let [key, value] of formData.entries()) {
+                // Handle checkboxes specifically
+                if (key === 'data_type') {
+                    dataTypes.push(value);
+                } else if (key === 'certifications') {
+                    certifications.push(value);
+                }
+                // Handle other fields (simple key-value)
+                // For fields that might appear multiple times (like 'other' inputs),
+                // this simple approach takes the last one. A more robust solution
+                // might be needed if multiple 'other' fields with the same name exist.
+                else {
+                     // Check if the element is a select and get the text of the selected option
+                    const element = form.elements[key];
+                    if (element && element.tagName === 'SELECT' && element.selectedIndex >= 0) {
+                         // Store both value and text for selects if needed, here storing text for readability
+                         data[key] = element.options[element.selectedIndex].text.replace(/^-- Select .* --$/, '').trim(); // Get text, remove placeholder prefix
+                    } else {
+                         data[key] = value;
+                    }
+                }
+            }
+            // Add collected checkbox values
+            data['data_type'] = dataTypes.join(', ') || 'None Selected';
+            data['certifications'] = certifications.join(', ') || 'None Selected';
+
+            // Clean up empty 'other' fields if the main select wasn't 'other'
+             if (data['service-type'] !== 'Other') delete data['service-type-other'];
+             if (data['integration-method'] !== 'Other') delete data['integration-method-other'];
+             if (data['vendor-profile-type'] !== 'Other') delete data['vendor-profile-type-other'];
+             if (!certifications.includes('other')) delete data['cert-other-details'];
+
+
+            return data;
+        }
+
+        // Function to format data for email body
+        function formatAssessmentSummary(data) {
+            if (!data) return 'No data collected.';
+
+            let summary = "Vendor Assessment Summary:\n";
+            summary += "===========================\n\n";
+
+            // Helper function to add a section
+            const addSection = (title, fields) => {
+                summary += `--- ${title} ---\n`;
+                fields.forEach(key => {
+                    const labelElement = document.querySelector(`label[for="${key}"]`);
+                    const label = labelElement ? labelElement.textContent.replace('*','').trim() : key; // Get label text
+                    const value = data[key] || 'N/A';
+                    summary += `${label}: ${value}\n`;
+                });
+                summary += "\n";
+            };
+
+            // Add sections based on form structure
+            addSection("Vendor Details", ["vendor-name", "vendor-legal-name", "vendor-website", "vendor-address"]);
+            addSection("Vendor SPOC & Services Details", ["vendor-spoc-name", "vendor-spoc-position", "vendor-spoc-phone", "vendor-service-desc"]);
+            addSection("Vendor Service Hosting Details", ["vendor-hosting-details"]);
+            addSection("Vendor On-Boarding Initiating Department", ["business-spoc-name", "reporting-manager-name", "business-spoc-email", "reporting-manager-email", "business-spoc-dept", "dept-head-name", "business-spoc-phone", "dept-head-email"]);
+            addSection("Service & Integration Details", ["service-type", "service-type-other", "integration-method", "integration-method-other", "data-flow-direction"]);
+            addSection("Data Handling & Security", ["data_type", "data-classification-max", "data-residency"]);
+            addSection("Vendor Profile & Criticality", ["vendor-profile-type", "vendor-profile-type-other", "vendor-profile-criticality"]);
+            addSection("Compliance & Audit Information", ["certifications", "cert-other-details", "audit-summary-details"]);
+
+            return summary;
+        }
+
+        // Function to show/hide the modal
+        function toggleModal(show) {
+            const modal = document.getElementById('email-summary-modal');
+            if (modal) {
+                if (show) {
+                    modal.classList.add('active');
+                } else {
+                    modal.classList.remove('active');
+                }
+            }
+        }
+
+
+        // --- Navigation Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const pageTitle = document.getElementById('page-title');
+
+            // Function to switch active section
+            function switchSection(targetId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                const activeSection = document.getElementById(targetId);
+                if (activeSection) {
+                    activeSection.classList.add('active');
+                    // Update page title
+                    const activeLink = document.querySelector(`.sidebar-link[data-target="${targetId}"]`);
+                    pageTitle.textContent = activeLink ? activeLink.textContent.trim() : 'Dashboard';
+                }
+
+                // Update active link style
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('data-target') === targetId) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            // Add click listeners to sidebar links
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const targetId = link.getAttribute('data-target');
+                    if (targetId) {
+                        switchSection(targetId);
+                    }
+                });
+            });
+
+            // Initial setup: Show dashboard and populate tables
+            switchSection('dashboard');
+            populateRiskTable();
+            populateComplianceList();
+            populateAuditTable();
+            populatePolicyTable();
+
+            // --- NEW: Event Listeners for Vendor Form & Modal ---
+            const saveButton = document.getElementById('save-assessment-button');
+            const vendorForm = document.getElementById('vendor-assessment-form');
+            const modal = document.getElementById('email-summary-modal');
+            const closeModalButton = document.getElementById('close-modal-button');
+            const cancelModalButton = document.getElementById('cancel-modal-button');
+            const sendEmailButton = document.getElementById('send-email-button');
+            const recipientEmailInput = document.getElementById('recipient-email');
+            const summaryPreviewArea = document.getElementById('summary-preview');
+
+            if (saveButton && vendorForm && modal) {
+                saveButton.addEventListener('click', (event) => {
+                    // Basic validation check (HTML5 required attribute handles most)
+                    if (!vendorForm.checkValidity()) {
+                         // Optionally trigger browser's validation UI explicitly
+                         vendorForm.reportValidity();
+                         return; // Stop if form is invalid
+                    }
+
+                    console.log("Save Assessment Clicked (Prototype - No actual save)");
+                    const formData = getVendorFormData();
+                    currentAssessmentSummary = formatAssessmentSummary(formData); // Store summary
+
+                    // Update preview area in modal
+                    if(summaryPreviewArea) {
+                        summaryPreviewArea.value = currentAssessmentSummary;
+                    }
+
+                    // Show the modal
+                    toggleModal(true);
+                });
+            }
+
+            // Modal close buttons
+            if(closeModalButton) {
+                closeModalButton.addEventListener('click', () => toggleModal(false));
+            }
+             if(cancelModalButton) {
+                cancelModalButton.addEventListener('click', () => toggleModal(false));
+            }
+
+            // Modal overlay click to close
+            if(modal) {
+                modal.addEventListener('click', (event) => {
+                    // Close only if clicking the overlay itself, not the content inside
+                    if (event.target === modal) {
+                        toggleModal(false);
+                    }
+                });
+            }
+
+
+            // Send email button logic
+            if (sendEmailButton && recipientEmailInput) {
+                sendEmailButton.addEventListener('click', () => {
+                    const recipient = recipientEmailInput.value.trim();
+                    if (!recipient) {
+                        alert('Please enter a recipient email address.');
+                        return;
+                    }
+                    if (!currentAssessmentSummary) {
+                         alert('No assessment summary available to send.');
+                         return;
+                    }
+
+                    const subject = "Vendor Assessment Summary";
+                    // Encode subject and body for mailto link
+                    const encodedSubject = encodeURIComponent(subject);
+                    const encodedBody = encodeURIComponent(currentAssessmentSummary);
+
+                    // Construct mailto link
+                    const mailtoLink = `mailto:${recipient}?subject=${encodedSubject}&body=${encodedBody}`;
+
+                    // Attempt to open email client
+                    // Note: This might be blocked by pop-up blockers or fail if link is too long
+                    try {
+                         window.location.href = mailtoLink;
+                    } catch (e) {
+                         console.error("Failed to open mailto link:", e);
+                         alert("Could not open email client. The summary might be too long or mailto links are blocked.");
+                    }
+
+
+                    // Close the modal after attempting to send
+                    toggleModal(false);
+                });
+            }
+
+            // --- Optional: JS for conditional 'Other' fields ---
+            // Example for Service Type 'Other' field
+            const serviceTypeSelect = document.getElementById('service-type');
+            const serviceTypeOtherInput = document.getElementById('service-type-other');
+            if (serviceTypeSelect && serviceTypeOtherInput) {
+                serviceTypeSelect.addEventListener('change', function() {
+                    if (this.value === 'other') {
+                        serviceTypeOtherInput.classList.remove('hidden');
+                        serviceTypeOtherInput.required = true; // Make required if shown
+                    } else {
+                        serviceTypeOtherInput.classList.add('hidden');
+                        serviceTypeOtherInput.required = false; // Not required if hidden
+                        serviceTypeOtherInput.value = ''; // Clear value when hidden
+                    }
+                });
+            }
+             // Repeat similar logic for integration-method and vendor-profile-type 'Other' fields if needed
+
+        }); // End DOMContentLoaded
+
+    </script>
+
+</body>
+</html>
