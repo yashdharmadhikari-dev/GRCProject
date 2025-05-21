@@ -3,1178 +3,1384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GRC Insight - Prototype</title>
+    <title>GRC Portal - Streamlined TPRM & VP Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Optional: Customize Tailwind theme if needed
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'], // Use Inter font
-                    },
-                    colors: {
-                        primary: {
-                            light: '#60a5fa', // blue-400
-                            DEFAULT: '#2563eb', // blue-600
-                            dark: '#1d4ed8', // blue-800
-                        },
-                        secondary: '#f3f4f6', // gray-100
-                        accent: '#10b981', // emerald-500
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Basic styling for scrollbars and transitions */
         body {
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            background-color: #f4f7f9; /* A slightly cooler, modern light gray */
         }
-        .sidebar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar::-webkit-scrollbar-thumb {
-            background-color: #9ca3af; /* gray-400 */
-            border-radius: 20px;
-        }
-        .content-section {
-            display: none; /* Hide sections by default */
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        .content-section.active {
-            display: block; /* Show active section */
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .sidebar-link {
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        }
-        .sidebar-link.active, .sidebar-link:hover {
-            background-color: #dbeafe; /* blue-100 */
-            color: #1e3a8a; /* blue-900 */
+        .nav-link-active {
+            background-color: #4338CA; /* Indigo-700 for active */
+            color: white;
             font-weight: 600;
         }
-         /* Style for tables */
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb; /* gray-200 */
-        }
-        th {
-            background-color: #f9fafb; /* gray-50 */
-            font-weight: 600;
-            color: #374151; /* gray-700 */
-            text-transform: uppercase;
-            font-size: 0.85rem;
-        }
-        tr:hover {
-            background-color: #f3f4f6; /* gray-100 */
-        }
-        /* Status badge styles */
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 9999px; /* pill shape */
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            display: inline-block;
-        }
-        .status-high { background-color: #fee2e2; color: #b91c1c; } /* red */
-        .status-medium { background-color: #fef3c7; color: #b45309; } /* amber */
-        .status-low { background-color: #d1fae5; color: #065f46; } /* emerald */
-        .status-compliant { background-color: #d1fae5; color: #065f46; } /* emerald */
-        .status-non-compliant { background-color: #fee2e2; color: #b91c1c; } /* red */
-        .status-pending { background-color: #e0e7ff; color: #3730a3; } /* indigo */
-        .status-inprogress { background-color: #ccfbf1; color: #0f766e; } /* teal */
-        .status-completed { background-color: #dcfce7; color: #166534; } /* green */
-        .status-open { background-color: #fef9c3; color: #a16207; } /* yellow */
-        .status-closed { background-color: #e5e7eb; color: #4b5563; } /* gray */
-
-        /* Card styles */
-        .card {
-            background-color: white;
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
-            padding: 1.5rem; /* p-6 */
-            margin-bottom: 1.5rem; /* mb-6 */
-        }
-
-        .card-title {
-            font-size: 1.125rem; /* text-lg */
-            font-weight: 600;
-            color: #1f2937; /* gray-800 */
-            margin-bottom: 1rem; /* mb-4 */
-        }
-
-        /* Form input styling */
-        label {
-            display: block;
-            margin-bottom: 0.5rem; /* mb-2 */
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500;
-            color: #374151; /* gray-700 */
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        input[type="url"],
-        select, /* Added select styling */
-        textarea {
-            display: block;
-            width: 100%;
-            padding: 0.5rem 0.75rem; /* py-2 px-3 */
-            border: 1px solid #d1d5db; /* border-gray-300 */
-            border-radius: 0.375rem; /* rounded-md */
-            box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            font-size: 0.875rem; /* text-sm */
-            color: #1f2937; /* gray-800 */
-            line-height: 1.5;
-            background-color: white; /* Ensure select background is white */
-        }
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="tel"]:focus,
-        input[type="url"]:focus,
-        select:focus, /* Added select focus styling */
-        textarea:focus {
-            outline: 2px solid transparent;
-            outline-offset: 2px;
-            border-color: #2563eb; /* primary color */
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5); /* ring-primary */
-        }
-        textarea {
-            min-height: 80px;
-        }
-        .form-section-title {
-            font-size: 1rem; /* text-base */
-            font-weight: 600;
-            color: #111827; /* gray-900 */
-            padding-bottom: 0.5rem; /* pb-2 */
-            border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
-            margin-bottom: 1rem; /* mb-4 */
-            margin-top: 1.5rem; /* mt-6 */
-        }
-        /* Checkbox styling */
-         input[type="checkbox"] {
-            height: 1rem; /* h-4 */
-            width: 1rem; /* w-4 */
-            border-radius: 0.25rem; /* rounded */
-            border-color: #d1d5db; /* border-gray-300 */
-            color: #2563eb; /* text-primary */
-        }
-        input[type="checkbox"]:focus {
-             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5); /* ring-primary */
-             border-color: #2563eb; /* primary color */
-             outline: none;
-        }
-        fieldset legend {
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500;
-            color: #374151; /* gray-700 */
-            margin-bottom: 0.5rem; /* mb-2 */
-        }
-        fieldset .flex { /* Ensure checkbox and label align well */
-            align-items: center;
-        }
-        fieldset label { /* Adjust label margin for checkboxes */
-             margin-bottom: 0;
-             margin-left: 0.75rem; /* ml-3 */
-             color: #111827; /* gray-900 */
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
+        .modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(30, 41, 59, 0.7); /* Slate-800 with opacity */
         }
         .modal-content {
+            background-color: #ffffff; margin: 8% auto; padding: 2rem; border: 0;
+            width: 90%; max-width: 580px; border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        .alert-modal-content {
+             background-color: #ffffff; margin: 15% auto; padding: 1.75rem; border: 0;
+            width: 90%; max-width: 480px; border-radius: 0.75rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            text-align: center;
+        }
+        .close-button {
+            color: #6b7280; float: right; font-size: 2rem; font-weight: 700; line-height: 1;
+        }
+        .close-button:hover, .close-button:focus {
+            color: #1f2937; text-decoration: none; cursor: pointer;
+        }
+        /* Modified global canvas style */
+        canvas { 
+            max-width: 100%; 
+            height: 280px; /* Allow inline style to dictate height primarily */
+        } 
+        .selected-vendor-row { background-color: #EEF2FF !important; } /* indigo-50 */
+
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; } /* slate-200 */
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; } /* slate-400 */
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; } /* slate-500 */
+
+        .kri-card {
+            background: linear-gradient(145deg, #ffffff, #f0f3f6);
+            padding: 1.5rem; border-radius: 1rem; /* rounded-2xl for softer look */
+            box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff; /* Neumorphic-ish shadow */
+            text-align: center; transition: all 0.3s ease-in-out;
+        }
+        .kri-card:hover { transform: translateY(-5px); box-shadow: 12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff; }
+        .kri-value {
+            font-size: 2.5rem; /* text-5xl */ font-weight: 800; /* font-extrabold */ color: #4A5568; /* Slate-700 */
+        }
+        .kri-value.high-risk { color: #E53E3E; } /* Red-600 */
+        .kri-value.good-compliance { color: #38A169; } /* Green-600 */
+
+        .kri-label { font-size: 0.875rem; color: #718096; margin-top: 0.5rem; } /* Slate-500 */
+        .chart-container {
+            background-color: #ffffff; padding: 1.75rem; border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
+            min-height: 250px; /* Keep a min-height */
+            position: relative; /* Added for Chart.js sizing */
+        }
+        .page-title {
+             font-size: 2.25rem; /* text-4xl */
+             font-weight: 800; /* font-extrabold */
+             color: #374151; /* gray-700 */
+             margin-bottom: 1.5rem; /* mb-6 */
+             text-align: center;
+        }
+        .section-card {
             background-color: white;
-            padding: 1.5rem; /* p-6 */
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
-            width: 90%;
-            max-width: 500px; /* Limit modal width */
-            max-height: 90vh;
-            overflow-y: auto;
-            transform: scale(0.95);
-            transition: transform 0.3s ease-in-out;
-        }
-         .modal-overlay.active .modal-content {
-             transform: scale(1);
-         }
-        .modal-title {
-            font-size: 1.25rem; /* text-xl */
-            font-weight: 600;
-            color: #1f2937; /* gray-800 */
-            margin-bottom: 1rem; /* mb-4 */
-        }
-        .modal-body textarea {
-            min-height: 150px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            background-color: #f9fafb; /* gray-50 */
+            border-radius: 1rem; /* rounded-2xl */
+            padding: 2rem; /* p-8 */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
     </style>
 </head>
-<body class="bg-secondary">
+<body class="bg-slate-100 text-slate-800">
 
-    <div class="flex h-screen">
-        <aside class="w-64 bg-white shadow-md flex flex-col sidebar overflow-y-auto">
-            <div class="p-6 border-b flex items-center justify-center">
-                 <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                <h1 class="text-xl font-bold text-gray-800 ml-2">VELTRIX</h1>
-            </div>
-
-            <nav class="flex-1 px-4 py-4 space-y-2">
-                <a href="#" data-target="dashboard" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md active">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Dashboard
-                </a>
-                <a href="#" data-target="risk" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Risk Management
-                </a>
-                <a href="#" data-target="compliance" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
-                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Compliance
-                </a>
-                <a href="#" data-target="audit" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    Audit Management
-                </a>
-                <a href="#" data-target="vendor" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md"> <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    Vendor Assessment
-                </a>
-                 <a href="#" data-target="policy" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    Policy Management
-                </a>
-                 <a href="#" data-target="reports" class="sidebar-link flex items-center px-4 py-2.5 text-gray-700 rounded-md">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Reporting
-                </a>
-            </nav>
-
-             <div class="p-4 border-t mt-auto">
-                <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    Settings
-                </a>
-                 <a href="#" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Logout
-                </a>
-            </div>
-        </aside>
-
-        <main class="flex-1 p-6 lg:p-10 overflow-y-auto">
-            <div class="flex justify-between items-center mb-8">
-                <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
-                <div class="flex items-center space-x-4">
-                    <button class="p-2 bg-white rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </button>
-                    <div class="relative">
-                        <img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/E2E8F0/4A5568?text=User" alt="User avatar" onerror="this.src='https://placehold.co/100x100/E2E8F0/4A5568?text=User'; this.onerror=null;">
-                        <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white"></span>
+    <header class="bg-white shadow-lg sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="text-2xl sm:text-3xl font-extrabold text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 inline-block mr-2 -mt-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Veltrix
+                </div>
+                <div class="flex space-x-2 sm:space-x-4">
+                    <a href="#" id="nav-home" class="nav-link px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors">Home</a>
+                    <a href="#" id="nav-tprm" class="nav-link px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors">TPRM</a>
+                    <a href="#" id="nav-vp-dashboard" class="nav-link px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors">VP Dashboard</a>
                     </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-10">
+        <section id="home-section" class="section-card">
+            <h1 class="page-title text-indigo-700">Welcome to GRC Sentry</h1>
+            <p class="mb-8 text-center text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">Your intelligent platform for proactive Governance, Risk Management, and Compliance. Streamline third-party assessments and gain actionable risk insights.</p>
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="bg-indigo-50 hover:bg-indigo-100 transition-all duration-300 p-8 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1">
+                    <h2 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-3">Third-Party Risk Management</h2>
+                    <p class="text-sm sm:text-base text-indigo-800 mb-6">Efficiently onboard vendors, conduct comprehensive risk assessments, and monitor compliance with our guided TPRM workflow.</p>
+                    <button onclick="showSection('tprm-vendor-form-section', 'nav-tprm')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out text-base">Launch TPRM Module</button>
+                </div>
+                 <div class="bg-purple-50 hover:bg-purple-100 transition-all duration-300 p-8 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1">
+                    <h2 class="text-xl sm:text-2xl font-bold text-purple-700 mb-3">VP Risk Dashboard</h2>
+                    <p class="text-sm sm:text-base text-purple-800 mb-6">Access a strategic overview of your vendor risk landscape, identify trends, and make data-driven decisions with our executive dashboard.</p>
+                    <button onclick="attemptShowVPDashboard()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out text-base">View Executive Dashboard</button>
                 </div>
             </div>
+        </section>
 
-            <div id="dashboard" class="content-section active">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                    <div class="card">
-                        <h3 class="card-title">Key Risk Indicators</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">IT System Downtime</span>
-                                <span class="status-badge status-low">Low</span>
-                            </div>
-                             <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Data Breach Incidents</span>
-                                <span class="status-badge status-medium">Medium</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Project Overruns</span>
-                                <span class="status-badge status-high">High</span>
-                            </div>
-                        </div>
+        <section id="tprm-vendor-form-section" class="hidden section-card">
+            <h1 class="page-title text-indigo-700">TPRM - New Vendor Registration</h1>
+            <form id="vendor-form" class="space-y-7">
+                <div class="grid md:grid-cols-2 gap-x-6 gap-y-5">
+                    <div>
+                        <label for="vendorName" class="block text-sm font-semibold text-slate-700 mb-1">Vendor Name</label>
+                        <input type="text" id="vendorName" value="DataCorp Solutions" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
                     </div>
-                    <div class="card">
-                        <h3 class="card-title">Compliance Status</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">ISO 27001</span>
-                                <span class="status-badge status-compliant">Compliant</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">GDPR</span>
-                                <span class="status-badge status-pending">Pending Review</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">SOX</span>
-                                <span class="status-badge status-non-compliant">Non-Compliant</span>
-                            </div>
-                        </div>
-                    </div>
-                     <div class="card">
-                        <h3 class="card-title">Audit Schedule</h3>
-                         <p class="text-gray-500 text-sm">Upcoming Audits:</p>
-                        <ul class="mt-2 space-y-2 text-sm">
-                            <li class="flex justify-between"><span>IT General Controls</span> <span class="text-gray-500">Apr 25, 2025</span></li>
-                            <li class="flex justify-between"><span>Financial Statement Audit</span> <span class="text-gray-500">May 10, 2025</span></li>
-                            <li class="flex justify-between"><span>Vendor Risk Assessment</span> <span class="text-gray-500">Jun 01, 2025</span></li>
-                        </ul>
+                    <div>
+                        <label for="serviceProvided" class="block text-sm font-semibold text-slate-700 mb-1">Service Provided</label>
+                        <input type="text" id="serviceProvided" value="Cloud Analytics Platform" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
                     </div>
                 </div>
-                 <div class="card">
-                     <h3 class="card-title">Risk Heatmap (Placeholder)</h3>
-                     <div class="bg-gray-200 h-48 flex items-center justify-center rounded-md text-gray-500">
-                         Risk Heatmap Visualization - Future Implementation
-                     </div>
-                 </div>
-            </div>
-
-            <div id="risk" class="content-section">
-                 <div class="card">
-                    <div class="flex justify-between items-center mb-4">
-                         <h3 class="card-title mb-0">Risk Register</h3>
-                         <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition duration-200 text-sm font-medium">Add New Risk</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white">
-                            <thead>
-                                <tr>
-                                    <th>Risk ID</th>
-                                    <th>Risk Name</th>
-                                    <th>Category</th>
-                                    <th>Risk Score</th>
-                                    <th>Status</th>
-                                    <th>Owner</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="risk-table-body">
-                                </tbody>
-                        </table>
-                    </div>
-                 </div>
-                 <div class="card mt-6">
-                     <h3 class="card-title">Risk Heatmap (Placeholder)</h3>
-                     <div class="bg-gray-200 h-64 flex items-center justify-center rounded-md text-gray-500">
-                         Interactive Risk Heatmap Visualization - Future Implementation
-                     </div>
-                 </div>
-            </div>
-
-            <div id="compliance" class="content-section">
-                 <div class="card">
-                    <h3 class="card-title">Compliance Overview</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h4 class="font-semibold text-gray-700 mb-2">Regulations & Standards</h4>
-                            <ul id="compliance-list" class="space-y-2">
-                                </ul>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-700 mb-2">Compliance Tasks Due</h4>
-                             <p class="text-gray-500 text-sm">(Placeholder)</p>
-                             <ul class="mt-2 space-y-2 text-sm">
-                                <li class="flex justify-between"><span>GDPR Assessment</span> <span class="text-red-600">Overdue</span></li>
-                                <li class="flex justify-between"><span>ISO Policy Review</span> <span class="text-gray-500">Due Apr 30</span></li>
-                                <li class="flex justify-between"><span>SOX Control Test</span> <span class="text-gray-500">Due May 15</span></li>
-                             </ul>
-                        </div>
-                    </div>
-                </div>
-                 <div class="card mt-6">
-                     <h3 class="card-title">Compliance Assessment (Placeholder)</h3>
-                     <div class="bg-gray-200 h-40 flex items-center justify-center rounded-md text-gray-500">
-                         Compliance Assessment Checklist / Control Testing Interface - Future Implementation
-                     </div>
-                 </div>
-            </div>
-
-            <div id="audit" class="content-section">
-                <div class="card">
-                    <div class="flex justify-between items-center mb-4">
-                         <h3 class="card-title mb-0">Audit Plan & Findings</h3>
-                         <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition duration-200 text-sm font-medium">Schedule New Audit</button>
-                    </div>
-                     <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white">
-                            <thead>
-                                <tr>
-                                    <th>Audit ID</th>
-                                    <th>Audit Name</th>
-                                    <th>Status</th>
-                                    <th>Findings (Open)</th>
-                                    <th>Due Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="audit-table-body">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="vendor" class="content-section">
-                <div class="card">
-                    <h3 class="card-title">New Vendor Assessment / Onboarding</h3>
-
-                    <form id="vendor-assessment-form" action="#" method="POST">
-                        <h4 class="form-section-title">Vendor Details</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="vendor-name">Vendor's Name*</label>
-                                <input type="text" id="vendor-name" name="vendor-name" required>
-                            </div>
-                            <div>
-                                <label for="vendor-legal-name">Legal Name of the Vendor*</label>
-                                <input type="text" id="vendor-legal-name" name="vendor-legal-name" required>
-                            </div>
-                            <div>
-                                <label for="vendor-website">Vendor's Website / Domain Name*</label>
-                                <input type="url" id="vendor-website" name="vendor-website" placeholder="https://example.com" required>
-                            </div>
-                            <div>
-                                <label for="vendor-address">Complete address of the Vendor*</label>
-                                <textarea id="vendor-address" name="vendor-address" rows="3" required></textarea>
-                            </div>
-                        </div>
-
-                        <h4 class="form-section-title">Vendor SPOC & Services Details</h4>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="vendor-spoc-name">Vendor Spoc's Name*</label>
-                                <input type="text" id="vendor-spoc-name" name="vendor-spoc-name" required>
-                            </div>
-                             <div>
-                                <label for="vendor-spoc-position">Vendor Spoc's Position*</label>
-                                <input type="text" id="vendor-spoc-position" name="vendor-spoc-position" required>
-                            </div>
-                            <div>
-                                <label for="vendor-spoc-phone">Vendor Spoc's Phone number*</label>
-                                <input type="tel" id="vendor-spoc-phone" name="vendor-spoc-phone" required>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="vendor-service-desc">Please provide a detailed brief description of the service provided by the vendor*</label>
-                                <textarea id="vendor-service-desc" name="vendor-service-desc" rows="4" required></textarea>
-                            </div>
-                        </div>
-
-                         <h4 class="form-section-title">Vendor Service Hosting Details</h4>
-                          <div>
-                                <label for="vendor-hosting-details">Vendor Service Hosting Details*</label>
-                                <input type="text" id="vendor-hosting-details" name="vendor-hosting-details" required>
-                          </div>
-
-                         <h4 class="form-section-title">Vendor On-Boarding Initiating Department</h4>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div>
-                                <label for="business-spoc-name">Business SPOC Name*</label>
-                                <input type="text" id="business-spoc-name" name="business-spoc-name" required>
-                            </div>
-                             <div>
-                                <label for="reporting-manager-name">Reporting Manager Name*</label>
-                                <input type="text" id="reporting-manager-name" name="reporting-manager-name" required>
-                            </div>
-                             <div>
-                                <label for="business-spoc-email">Business SPOC Email ID*</label>
-                                <input type="email" id="business-spoc-email" name="business-spoc-email" required>
-                            </div>
-                            <div>
-                                <label for="reporting-manager-email">Reporting Manager Email ID*</label>
-                                <input type="email" id="reporting-manager-email" name="reporting-manager-email" required>
-                            </div>
-                             <div>
-                                <label for="business-spoc-dept">Business SPOC Department*</label>
-                                <input type="text" id="business-spoc-dept" name="business-spoc-dept" required>
-                            </div>
-                             <div>
-                                <label for="dept-head-name">Department Head Name*</label>
-                                <input type="text" id="dept-head-name" name="dept-head-name" required>
-                            </div>
-                             <div>
-                                <label for="business-spoc-phone">Business SPOC Phone number*</label>
-                                <input type="tel" id="business-spoc-phone" name="business-spoc-phone" required>
-                            </div>
-                             <div>
-                                <label for="dept-head-email">Department Head Email ID*</label>
-                                <input type="email" id="dept-head-email" name="dept-head-email" required>
-                            </div>
-                         </div>
-
-                        <h4 class="form-section-title">Service & Integration Details</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <div>
-                                <label for="service-type">Primary Service Type*</label>
-                                <select id="service-type" name="service-type" required class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                    <option value="">-- Select Service Type --</option>
-                                    <option value="saas">SaaS Application</option>
-                                    <option value="paas">PaaS Platform</option>
-                                    <option value="iaas">IaaS Infrastructure</option>
-                                    <option value="prof_services">Professional Services / Consulting</option>
-                                    <option value="managed_service">Managed Service Provider</option>
-                                    <option value="bpo">Business Process Outsourcing (BPO)</option>
-                                    <option value="hardware">Hardware Supplier</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                <input type="text" id="service-type-other" name="service-type-other" placeholder="Specify other service type" class="mt-2 hidden"> </div>
-                            <div>
-                                <label for="integration-method">Primary Integration Method*</label>
-                                <select id="integration-method" name="integration-method" required class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                    <option value="">-- Select Integration --</option>
-                                    <option value="api_rest">API (REST)</option>
-                                    <option value="api_soap">API (SOAP)</option>
-                                    <option value="sftp">SFTP/FTP</option>
-                                    <option value="db_conn">Direct Database Connection</option>
-                                    <option value="manual_file">Manual File Exchange</option>
-                                    <option value="sso">Single Sign-On (SSO)</option>
-                                    <option value="vpn">Site-to-Site VPN</option>
-                                    <option value="no_integration">No Technical Integration</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                <input type="text" id="integration-method-other" name="integration-method-other" placeholder="Specify other integration" class="mt-2 hidden"> </div>
-                             <div>
-                                <label for="data-flow-direction">Primary Data Flow Direction*</label>
-                                <select id="data-flow-direction" name="data-flow-direction" required class="block w-full mt-1 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                    <option value="">-- Select Direction --</option>
-                                    <option value="company_to_vendor">Company -> Vendor</option>
-                                    <option value="vendor_to_company">Vendor -> Company</option>
-                                    <option value="bidirectional">Bi-directional</option>
-                                    <option value="na">Not Applicable</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <h4 class="form-section-title">Data Handling & Security</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
-                            <fieldset>
-                                <legend>Types of Data Accessed/Processed/Stored* (Select all that apply)</legend>
-                                <div class="space-y-2">
-                                    <div class="flex items-center">
-                                        <input id="data-type-pii" name="data_type" type="checkbox" value="pii">
-                                        <label for="data-type-pii">Personal Data (PII/SPI)</label>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <input id="data-type-financial" name="data_type" type="checkbox" value="financial">
-                                        <label for="data-type-financial">Financial Data (Incl. Cardholder Data)</label>
-                                    </div>
-                                     <div class="flex items-center">
-                                        <input id="data-type-health" name="data_type" type="checkbox" value="health">
-                                        <label for="data-type-health">Health Information (PHI)</label>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <input id="data-type-ip" name="data_type" type="checkbox" value="ip">
-                                        <label for="data-type-ip">Intellectual Property / Confidential Business Info</label>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <input id="data-type-operational" name="data_type" type="checkbox" value="operational">
-                                        <label for="data-type-operational">Operational Data</label>
-                                    </div>
-                                     <div class="flex items-center">
-                                        <input id="data-type-public" name="data_type" type="checkbox" value="public">
-                                        <label for="data-type-public">Public Data Only</label>
-                                    </div>
-                                     <div class="flex items-center">
-                                        <input id="data-type-none" name="data_type" type="checkbox" value="none">
-                                        <label for="data-type-none">No Company Data Involved</label>
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <div> <div class="mb-4">
-                                    <label for="data-classification-max">Highest Data Classification Involved*</label>
-                                    <select id="data-classification-max" name="data-classification-max" required>
-                                        <option value="">-- Select Classification --</option>
-                                        <option value="public">Public</option>
-                                        <option value="internal">Internal Use Only</option>
-                                        <option value="confidential">Confidential</option>
-                                        <option value="restricted">Restricted / Sensitive</option>
-                                        <option value="na">Not Applicable (No Data)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="data-residency">Primary Data Residency/Hosting Location*</label>
-                                     <select id="data-residency" name="data-residency" required>
-                                        <option value="">-- Select Location --</option>
-                                        <option value="india">India</option>
-                                        <option value="eu">EU</option>
-                                        <option value="usa">USA</option>
-                                        <option value="apac">APAC (excl. India)</option>
-                                        <option value="global">Global / Multiple Regions</option>
-                                        <option value="vendor_infra">On Vendor Premises</option>
-                                         <option value="company_infra">On Company Premises</option>
-                                        <option value="na">Not Applicable</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h4 class="form-section-title">Vendor Profile & Criticality</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <label for="vendor-profile-type">Vendor Type*</label>
-                                <select id="vendor-profile-type" name="vendor-profile-type" required>
-                                    <option value="">-- Select Type --</option>
-                                    <option value="software">Software Provider</option>
-                                    <option value="cloud">Cloud Service Provider (CSP)</option>
-                                    <option value="managed">Managed Service Provider (MSP)</option>
-                                    <option value="consultant">Consultant / Professional Services</option>
-                                    <option value="hardware">Hardware Supplier</option>
-                                    <option value="bpo">Business Process Outsourcing (BPO)</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                <input type="text" id="vendor-profile-type-other" name="vendor-profile-type-other" placeholder="Specify other vendor type" class="mt-2 hidden"> </div>
-                            <div>
-                                <label for="vendor-profile-criticality">Vendor Criticality Assessment*</label>
-                                <select id="vendor-profile-criticality" name="vendor-profile-criticality" required>
-                                    <option value="">-- Select Criticality --</option>
-                                    <option value="critical">Critical (Tier 1 - Major disruption if unavailable)</option>
-                                    <option value="high">High (Tier 2 - Significant impact)</option>
-                                    <option value="medium">Medium (Tier 3 - Moderate impact)</option>
-                                    <option value="low">Low (Tier 4 - Minimal impact)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <h4 class="form-section-title">Compliance & Audit Information</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
-                             <fieldset>
-                                <legend>Relevant Certifications / Compliance (Select all that apply)</legend>
-                                <div class="space-y-2">
-                                    <div class="flex items-center">
-                                        <input id="cert-iso27001" name="certifications" type="checkbox" value="iso27001">
-                                        <label for="cert-iso27001">ISO 27001</label>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <input id="cert-soc2" name="certifications" type="checkbox" value="soc2">
-                                        <label for="cert-soc2">SOC 2 (Type I or II)</label>
-                                    </div>
-                                     <div class="flex items-center">
-                                        <input id="cert-pci" name="certifications" type="checkbox" value="pci">
-                                        <label for="cert-pci">PCI DSS</label>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <input id="cert-hipaa" name="certifications" type="checkbox" value="hipaa">
-                                        <label for="cert-hipaa">HIPAA Compliance</label>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <input id="cert-gdpr" name="certifications" type="checkbox" value="gdpr">
-                                        <label for="cert-gdpr">GDPR Compliance</label>
-                                    </div>
-                                     <div class="flex items-center">
-                                        <input id="cert-other" name="certifications" type="checkbox" value="other">
-                                        <label for="cert-other">Other (Specify Below)</label>
-                                    </div>
-                                     <input type="text" id="cert-other-details" name="cert-other-details" placeholder="Specify other certifications" class="mt-2 text-sm">
-                                </div>
-                            </fieldset>
-                            <div>
-                                <label for="audit-summary-details">Audit Summary / Key Findings (Optional)</label>
-                                <textarea id="audit-summary-details" name="audit-summary-details" rows="6" placeholder="Provide a brief summary of recent relevant audit reports (e.g., SOC 2 report date, scope, key exceptions) or attach reports if applicable."></textarea>
-                                <p class="mt-1 text-xs text-gray-500">Link to upload audit reports would be added in a full implementation.</p>
-                            </div>
-                        </div>
-                        <h4 class="form-section-title">Additional Assessment Questions (Placeholder)</h4>
-                        <p class="text-gray-500 mb-4">More detailed assessment questions (e.g., security controls, data handling practices, business continuity plans) would be added here.</p>
-                        <div class="bg-gray-100 p-4 rounded-md text-center text-gray-500">
-                            Further assessment fields to be added based on requirements.
-                        </div>
-
-                        <div class="mt-8 pt-5 border-t border-gray-200">
-                            <div class="flex justify-end space-x-3">
-                                <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark">
-                                    Cancel
-                                </button>
-                                <button type="button" id="save-assessment-button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-dark">
-                                    Save Assessment
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div id="policy" class="content-section">
-                 <div class="card">
-                    <div class="flex justify-between items-center mb-4">
-                         <h3 class="card-title mb-0">Policy Library</h3>
-                         <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition duration-200 text-sm font-medium">Upload New Policy</button>
-                    </div>
-                     <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white">
-                            <thead>
-                                <tr>
-                                    <th>Policy ID</th>
-                                    <th>Title</th>
-                                    <th>Version</th>
-                                    <th>Owner</th>
-                                    <th>Status</th>
-                                    <th>Next Review</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="policy-table-body">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-             <div id="reports" class="content-section">
-                 <div class="card">
-                    <h3 class="card-title">Reporting Center</h3>
-                    <p class="text-gray-600 mb-6">Generate standard or create custom GRC reports.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
-                            <h4 class="font-semibold text-gray-700">Risk Summary Report</h4>
-                            <p class="text-sm text-gray-500 mt-1">Overview of top risks and mitigation status.</p>
-                        </button>
-                         <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
-                            <h4 class="font-semibold text-gray-700">Compliance Status Report</h4>
-                            <p class="text-sm text-gray-500 mt-1">Detailed compliance against selected regulations.</p>
-                        </button>
-                         <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
-                            <h4 class="font-semibold text-gray-700">Audit Findings Report</h4>
-                            <p class="text-sm text-gray-500 mt-1">Summary of open and closed audit findings.</p>
-                        </button>
-                         <button class="bg-white p-4 rounded-md border border-gray-200 hover:shadow-md hover:border-primary transition duration-200 text-left">
-                            <h4 class="font-semibold text-gray-700">Policy Acknowledgement</h4>
-                            <p class="text-sm text-gray-500 mt-1">Track employee policy acknowledgements.</p>
-                        </button>
-                         <button class="bg-accent text-white p-4 rounded-md border border-transparent hover:shadow-lg hover:bg-emerald-600 transition duration-200 text-left">
-                            <h4 class="font-semibold">Custom Report Builder</h4>
-                            <p class="text-sm text-emerald-100 mt-1">Create your own report (Future Implementation).</p>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <div id="email-summary-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-4">
-                 <h3 class="modal-title">Send Assessment Summary</h3>
-                 <button id="close-modal-button" class="text-gray-400 hover:text-gray-600">&times;</button>
-            </div>
-            <div class="modal-body space-y-4">
-                <p class="text-sm text-gray-600">Assessment data prepared. Enter recipient email address and click send.</p>
                 <div>
-                    <label for="recipient-email" class="text-sm font-medium text-gray-700">Recipient Email Address*</label>
-                    <input type="email" id="recipient-email" name="recipient-email" required class="mt-1">
+                    <label for="vendorAddress" class="block text-sm font-semibold text-slate-700 mb-1">Vendor Address</label>
+                    <input type="text" id="vendorAddress" value="789 Data Drive, Cloud City, CC 54321" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div class="grid md:grid-cols-2 gap-x-6 gap-y-5">
+                    <div>
+                        <label for="contactPerson" class="block text-sm font-semibold text-slate-700 mb-1">Primary Contact Person</label>
+                        <input type="text" id="contactPerson" value="Mark Olsen" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="contactEmail" class="block text-sm font-semibold text-slate-700 mb-1">Contact Email</label>
+                        <input type="email" id="contactEmail" value="mark.olsen@datacorp.com" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-x-6 gap-y-5">
+                    <div>
+                        <label for="contractStartDate" class="block text-sm font-semibold text-slate-700 mb-1">Contract Start Date</label>
+                        <input type="date" id="contractStartDate" value="2022-06-01" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="contractEndDate" class="block text-sm font-semibold text-slate-700 mb-1">Contract End Date</label>
+                        <input type="date" id="contractEndDate" value="2024-05-31" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-x-6 gap-y-5">
+                    <div>
+                        <label for="serviceCriticalityScore" class="block text-sm font-semibold text-slate-700 mb-1">Service Criticality Score (1-10)</label>
+                        <input type="number" id="serviceCriticalityScore" min="1" max="10" value="8" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="dataSensitivityScore" class="block text-sm font-semibold text-slate-700 mb-1">Data Sensitivity Score (1-10)</label>
+                        <input type="number" id="dataSensitivityScore" min="1" max="10" value="9" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-x-6 gap-y-5">
+                    <div>
+                        <label for="geoServiceLocation" class="block text-sm font-semibold text-slate-700 mb-1">Geographic Location of Service</label>
+                        <select id="geoServiceLocation" class="mt-1 block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option>Onshore</option> <option>Nearshore</option> <option selected>Offshore - India</option> <option>Offshore - Europe</option> <option>Offshore - Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="fourthPartyDeps" class="block text-sm font-semibold text-slate-700 mb-1">Fourth-Party Dependencies</label>
+                        <select id="fourthPartyDeps" class="mt-1 block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option>No</option> <option selected>Yes - Non-Critical</option> <option>Yes - Critical</option>
+                        </select>
+                    </div>
                 </div>
                  <div>
-                    <label for="summary-preview" class="text-sm font-medium text-gray-700">Summary Preview (Read Only)</label>
-                    <textarea id="summary-preview" readonly class="mt-1 w-full h-40 border border-gray-300 rounded-md p-2 text-xs bg-gray-50"></textarea>
+                    <label for="lastInternalAuditDate" class="block text-sm font-semibold text-slate-700 mb-1">Last Internal Audit Date (if any)</label>
+                    <input type="date" id="lastInternalAuditDate" value="2023-11-10" class="mt-1 block w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
-                 <div class="flex justify-end space-x-3 pt-4 border-t">
-                     <button type="button" id="cancel-modal-button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Cancel
+                <div class="pt-2">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Types of Data Shared</label>
+                    <div class="mt-2 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                        <label class="inline-flex items-center"><input type="checkbox" name="dataType" value="PII" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500"> <span class="ml-2.5 text-sm text-slate-700">Personally Identifiable Information (PII)</span></label>
+                        <label class="inline-flex items-center"><input type="checkbox" name="dataType" value="Financial" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500" checked> <span class="ml-2.5 text-sm text-slate-700">Financial Data</span></label>
+                        <label class="inline-flex items-center"><input type="checkbox" name="dataType" value="Health" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500"> <span class="ml-2.5 text-sm text-slate-700">Health Information (PHI)</span></label>
+                        <label class="inline-flex items-center"><input type="checkbox" name="dataType" value="Proprietary" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500" checked> <span class="ml-2.5 text-sm text-slate-700">Company Proprietary Information</span></label>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Compliance Certifications Held</label>
+                    <div class="mt-2 space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                        <label class="inline-flex items-center"><input type="checkbox" name="complianceCert" value="ISO 27001" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500" checked> <span class="ml-2.5 text-sm text-slate-700">ISO 27001</span></label>
+                        <label class="inline-flex items-center"><input type="checkbox" name="complianceCert" value="SOC 2 Type II" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500" checked> <span class="ml-2.5 text-sm text-slate-700">SOC 2 Type II</span></label>
+                        <label class="inline-flex items-center"><input type="checkbox" name="complianceCert" value="HIPAA" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500"> <span class="ml-2.5 text-sm text-slate-700">HIPAA</span></label>
+                        <label class="inline-flex items-center"><input type="checkbox" name="complianceCert" value="PCI DSS" class="h-5 w-5 rounded text-indigo-600 border-slate-300 shadow-sm focus:ring-indigo-500"> <span class="ml-2.5 text-sm text-slate-700">PCI DSS</span></label>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-x-6 gap-y-5 pt-2">
+                    <div>
+                        <label for="riskTier" class="block text-sm font-semibold text-slate-700 mb-1">Initial Risk Tier (Self-Assessed)</label>
+                        <select id="riskTier" class="mt-1 block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option>High</option><option selected>Medium</option><option>Low</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="businessCriticality" class="block text-sm font-semibold text-slate-700 mb-1">Business Criticality (Overall)</label>
+                        <select id="businessCriticality" class="mt-1 block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option>Critical</option><option selected>Important</option><option>Supportive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full flex justify-center py-3.5 px-5 border border-transparent rounded-lg shadow-lg text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150 ease-in-out transform hover:scale-105">
+                        Proceed to Checklist &rarr;
                     </button>
-                    <button type="button" id="send-email-button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-accent hover:bg-emerald-700">
-                        Send Summary via Email
-                    </button>
-                 </div>
+                </div>
+            </form>
+        </section>
+
+        <section id="tprm-vendor-checklist-section" class="hidden section-card">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-7">
+                <h1 class="page-title text-indigo-700 !text-left !mb-2 sm:!mb-0">Vendor Action Checklist: <span id="vendor-checklist-vendor-name" class="text-indigo-500"></span></h1>
+                <button onclick="showSection('tprm-vendor-form-section', 'nav-tprm')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-5 rounded-lg shadow-md text-sm transition-colors">&larr; Back to Registration Form</button>
             </div>
+            <p class="mb-6 text-base text-slate-600">Please review each item, upload relevant supporting documents, and provide remarks where necessary.</p>
+            <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-lg shadow-inner">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Sr.</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Checklist Item</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Vendor Action (Upload)</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Vendor Remark</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendor-checklist-table-body" class="bg-white divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+            <div class="mt-10 flex justify-end">
+                <button id="submit-for-auditor-review-button" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-150 ease-in-out text-base transform hover:scale-105" onclick="openSubmissionConfirmationModal()">
+                    Submit for Auditor Review
+                </button>
+            </div>
+        </section>
+
+        <section id="auditor-review-checklist-section" class="hidden section-card">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-7">
+                 <h1 class="page-title text-indigo-700 !text-left !mb-2 sm:!mb-0">Auditor Review: <span id="auditor-review-vendor-name" class="text-indigo-500"></span></h1>
+                <button onclick="showSection('tprm-vendor-checklist-section', 'nav-tprm')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-5 rounded-lg shadow-md text-sm transition-colors">&larr; Back to Vendor Actions</button>
+            </div>
+            <p class="mb-6 text-base text-slate-600">Review vendor submissions, add auditor remarks, and approve/reject items. All items must be addressed to finalize.</p>
+            <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-lg shadow-inner">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Sr.</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Item</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Vendor Submission</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status & Auditor Remark</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Auditor Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditor-checklist-table-body" class="bg-white divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+            <div class="mt-10 flex justify-end">
+                <button id="finalize-assessment-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-150 ease-in-out text-base transform hover:scale-105" disabled>
+                    Finalize Assessment & Proceed &rarr;
+                </button>
+            </div>
+        </section>
+
+        <section id="vendor-assessment-outcome-section" class="hidden section-card">
+            <h1 class="page-title text-emerald-700">Assessment Outcome: <span id="outcome-vendor-name" class="text-emerald-600"></span></h1>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-8 text-center">
+                <div class="bg-slate-50 p-6 rounded-xl shadow-md">
+                    <div class="text-sm font-medium text-slate-500 mb-1">Calculated Risk Score</div>
+                    <div id="outcome-risk-score" class="text-4xl font-extrabold text-slate-700">0</div>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-xl shadow-md">
+                    <div class="text-sm font-medium text-slate-500 mb-1">Assigned Risk Tier</div>
+                    <div id="outcome-risk-tier" class="text-3xl font-bold text-slate-700">N/A</div>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-xl shadow-md">
+                    <div class="text-sm font-medium text-slate-500 mb-1">Compliance Health</div>
+                    <div id="outcome-compliance-health" class="text-4xl font-extrabold text-slate-700">0%</div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-slate-700 mb-3">Checklist Summary</h2>
+                <p id="outcome-checklist-summary" class="text-slate-600"></p>
+            </div>
+
+            <div id="outcome-rejected-items-container" class="hidden mb-8">
+                <h2 class="text-xl font-semibold text-red-600 mb-3">Rejected Items & Auditor Remarks</h2>
+                <ul id="outcome-rejected-items-list" class="list-disc list-inside space-y-2 text-sm text-slate-700 bg-red-50 p-4 rounded-lg border border-red-200">
+                    </ul>
+            </div>
+            
+            <div class="mt-10 pt-6 border-t border-slate-200">
+                <h2 class="text-xl font-semibold text-slate-700 mb-4 text-center">Next Steps</h2>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <button onclick="simulatePDFGeneration()" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-3 px-5 rounded-lg shadow-md hover:shadow-lg transition-all text-sm">Generate Summary Report (PDF)</button>
+                    <button id="outcome-remediation-button" onclick="simulateRemediation()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-5 rounded-lg shadow-md hover:shadow-lg transition-all text-sm hidden">Log Remediation Tasks</button>
+                    <button onclick="concludeAssessment()" class="w-full bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-5 rounded-lg shadow-md hover:shadow-lg transition-all text-sm">Conclude & Archive Assessment</button>
+                </div>
+                 <div class="mt-6 text-center">
+                    <button onclick="attemptShowVPDashboard()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-150 ease-in-out text-base transform hover:scale-105">
+                        View Overall VP Risk Dashboard &rarr;
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="vp-dashboard-section" class="hidden section-card">
+            <div id="vp-dashboard-content">
+                <h1 class="page-title text-purple-700">Vendor Risk Executive Dashboard</h1>
+                
+                <div class="mb-10">
+                    <h2 class="text-2xl font-bold text-purple-600 mb-6 text-center tracking-tight">Key Risk Indicators (KRIs)</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+                        <div class="kri-card">
+                            <div id="kri-avg-risk-score" class="kri-value">0</div>
+                            <div class="kri-label">Average Vendor Risk Score</div>
+                        </div>
+                        <div class="kri-card">
+                            <div id="kri-compliance-health" class="kri-value good-compliance">0%</div>
+                            <div class="kri-label">Overall Compliance Health</div>
+                        </div>
+                        <div class="kri-card">
+                            <div id="kri-high-risk-vendors" class="kri-value high-risk">0</div>
+                            <div class="kri-label">High-Risk Vendors (&ge;75)</div>
+                        </div>
+                        <div class="kri-card">
+                            <div id="kri-critical-deps" class="kri-value">0</div>
+                            <div class="kri-label">Critical 4th Party Deps</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-x-8 gap-y-8 mb-8">
+                    <div class="chart-container">
+                        <h2 class="text-xl font-semibold mb-4 text-center text-slate-700">Overall Risk Distribution</h2>
+                        <canvas id="vp-risk-distribution-histogram" style="max-height: 280px;"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2 class="text-xl font-semibold mb-4 text-center text-slate-700">Compliance Hotspots (Problematic Items)</h2>
+                        <canvas id="vp-compliance-hotspots-chart" style="max-height: 280px;"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2 class="text-xl font-semibold mb-4 text-center text-slate-700">Risk Matrix (Impact vs. Likelihood)</h2>
+                        <canvas id="vp-risk-matrix-scatter-chart" style="max-height: 280px;"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2 class="text-xl font-semibold mb-4 text-center text-slate-700">Data Sensitivity vs. Service Criticality</h2>
+                        <canvas id="vp-data-sensitivity-criticality-bubble-chart" style="max-height: 280px;"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2 class="text-xl font-semibold mb-4 text-center text-slate-700">Vendors by Calculated Risk Tier</h2>
+                        <canvas id="vp-risk-tier-pie-chart" style="max-height: 280px;"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h2 class="text-xl font-semibold mb-4 text-center text-slate-700">Vendors by Compliance Certification</h2>
+                        <canvas id="vp-certifications-bar-chart" style="max-height: 280px;"></canvas>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold mb-6 text-purple-600 mt-12 tracking-tight">Vendor Details List</h2>
+                <div class="overflow-x-auto bg-white rounded-xl shadow-lg mb-8 custom-scrollbar border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Vendor Name</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Calculated Risk (Tier)</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Compliance Health</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vp-vendor-list-table-body" class="bg-white divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+
+                <div id="vp-selected-vendor-details-section" class="hidden mt-12 p-8 bg-indigo-50 rounded-2xl shadow-xl">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-7 text-indigo-700">Detailed Insights for: <span id="vp-selected-vendor-name" class="text-indigo-600"></span></h2>
+                    <div class="grid md:grid-cols-3 gap-x-8 gap-y-6">
+                        <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-lg">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Key Information</h3>
+                            <dl class="space-y-2.5 text-sm">
+                                <div><dt class="font-medium text-slate-500">Service:</dt><dd id="vp-vendor-service" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Contact:</dt><dd id="vp-vendor-email" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Self-Assessed Risk:</dt><dd id="vp-vendor-initial-risk-tier" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Calculated Risk Score:</dt><dd id="vp-vendor-calculated-risk-score" class="text-slate-800 font-extrabold text-xl"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Business Criticality:</dt><dd id="vp-vendor-criticality" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Service Criticality:</dt><dd id="vp-vendor-service-criticality" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Data Sensitivity:</dt><dd id="vp-vendor-data-sensitivity" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Geo Location:</dt><dd id="vp-vendor-geo" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">4th Party Deps:</dt><dd id="vp-vendor-4th-party" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Certifications:</dt><dd id="vp-vendor-certs" class="text-slate-700 font-medium"></dd></div>
+                                <div><dt class="font-medium text-slate-500">Checklist Compliance:</dt><dd id="vp-vendor-compliance-health" class="text-slate-800 font-bold"></dd></div>
+                            </dl>
+                        </div>
+                        <div class="md:col-span-2 grid grid-rows-1 gap-8"> 
+                             <div class="chart-container p-5">
+                                <h3 class="text-lg font-semibold text-center text-slate-700 mb-3">Checklist Summary</h3>
+                                <canvas id="vp-vendor-detail-pie-chart" style="max-height: 280px;"></canvas>
+                            </div>
+                            <div class="chart-container p-5">
+                                <h3 class="text-lg font-semibold text-center text-slate-700 mb-3">Simulated Risk Score Trend (Quarterly)</h3>
+                                <canvas id="vp-vendor-risk-trend-line-chart" style="max-height: 280px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="vp-dashboard-no-data" class="hidden text-center py-16">
+                <svg class="mx-auto h-20 w-20 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <h3 class="mt-6 text-2xl font-semibold text-slate-800">No Vendor Data Available</h3>
+                <p class="mt-3 text-base text-slate-500 max-w-md mx-auto">
+                    The VP Dashboard requires vendor assessments to be processed. Please add and assess vendors to populate this dashboard with actionable insights.
+                </p>
+                <button onclick="showSection('tprm-vendor-form-section', 'nav-tprm')" class="mt-8 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-150 ease-in-out text-base transform hover:scale-105">Register First Vendor</button>
+            </div>
+        </section>
+
+        </main>
+
+    <footer class="bg-slate-800 text-slate-400 text-center p-6 mt-16">
+        <p class="text-sm">&copy; ${new Date().getFullYear()} Vetrix. All Rights Reserved. Developed by Yash Dharmadhikari</p>
+    </footer>
+
+    <div id="remarkModal" class="modal"><div class="modal-content">
+        <div class="flex justify-between items-center mb-5">
+            <h2 id="remarkModalTitle" class="text-xl font-semibold text-slate-800">Add Remark</h2>
+            <span class="close-button" onclick="closeRemarkModal()">&times;</span>
         </div>
-    </div>
+        <input type="hidden" id="remarkItemId"><input type="hidden" id="remarkUserType">
+        <textarea id="remarkText" rows="5" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow" placeholder="Enter remark..."></textarea>
+        <div class="mt-7 flex justify-end space-x-3">
+            <button onclick="closeRemarkModal()" class="px-5 py-2.5 text-sm font-medium text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-sm transition-colors">Cancel</button>
+            <button onclick="saveRemark()" class="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">Save Remark</button>
+        </div>
+    </div></div>
+
+    <div id="submissionConfirmationModal" class="modal"><div class="modal-content">
+         <div class="flex justify-between items-center mb-5">
+            <h2 class="text-xl font-semibold text-amber-600">Confirm Submission</h2>
+            <span class="close-button" onclick="closeSubmissionConfirmationModal()">&times;</span>
+        </div>
+        <p class="text-sm text-slate-700 mb-7">Are you sure you want to submit this assessment for auditor review? This action will forward the provided information and documents to the internal audit team.</p>
+        <div class="flex justify-end space-x-3">
+            <button onclick="closeSubmissionConfirmationModal()" class="px-5 py-2.5 text-sm font-medium text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-lg shadow-sm transition-colors">No, Cancel</button>
+            <button onclick="confirmVendorSubmission()" class="px-5 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-colors">Yes, Submit for Review</button>
+        </div>
+    </div></div>
+
+    <div id="alertModal" class="modal"><div class="alert-modal-content">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+            <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>
+        </div>
+        <h2 id="alertModalTitle" class="text-lg font-semibold mb-3 text-slate-800">Alert</h2>
+        <p id="alertModalMessage" class="text-sm text-slate-600 mb-6"></p>
+        <button onclick="closeAlertModal()" class="w-full px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">OK, Got it</button>
+    </div></div>
+
     <script>
-        // --- Mock Data ---
-        const mockRisks = [
-            { id: 'R001', name: 'Unauthorized Access', category: 'Cybersecurity', score: 16, status: 'High', owner: 'IT Security' },
-            { id: 'R002', name: 'Vendor Supply Chain Disruption', category: 'Operational', score: 12, status: 'Medium', owner: 'Procurement' },
-            { id: 'R003', name: 'Regulatory Changes', category: 'Compliance', score: 9, status: 'Medium', owner: 'Legal' },
-            { id: 'R004', name: 'Data Loss/Leakage', category: 'Cybersecurity', score: 20, status: 'High', owner: 'IT Security' },
-            { id: 'R005', name: 'Employee Misconduct', category: 'HR', score: 6, status: 'Low', owner: 'Human Resources' },
-            { id: 'R006', name: 'Financial Misstatement', category: 'Financial', score: 15, status: 'High', owner: 'Finance Dept.' },
+      // --- Global State & Configuration ---
+    let currentVendorData = {}; 
+    let checklistItems = []; 
+    const initialChecklistTemplate = [ 
+        { id: 1, item: "Information Security Program Review", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 2, item: "Access Control Policies & Procedures", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 3, item: "Incident Response Plan (IRP) Effectiveness", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 4, item: "Business Continuity & Disaster Recovery (BCDR) Plan", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 5, item: "Data Privacy & Protection (e.g., GDPR, CCPA)", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 6, item: "Physical and Environmental Security", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 7, item: "Sub-processor (Fourth-Party) Management Policy", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 8, item: "Security Awareness & Training Program", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 9, item: "Vulnerability Management Program", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" },
+        { id: 10, item: "Secure Software Development Lifecycle (SSDLC)", vendorDocName: null, vendorRemark: "", status: "Pending Vendor Action", auditorRemark: "" }
+    ];
+
+    // Chart instances 
+    let vpRiskDistributionHistogramInstance, vpComplianceHotspotsChartInstance, vpDataSensitivityCriticalityBubbleChartInstance;
+    let vpRiskTierPieChartInstance, vpComplianceBarChartInstance, vpRiskMatrixScatterChartInstance, vpCertificationsBarChartInstance;
+    let vpVendorDetailPieChartInstance, vpVendorRiskTrendLineChartInstance;
+    
+    // Default Chart.js options for better aesthetics
+    Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.plugins.legend.position = 'bottom';
+    Chart.defaults.plugins.legend.labels.boxWidth = 12;
+    Chart.defaults.plugins.legend.labels.padding = 15;
+    Chart.defaults.plugins.title.display = false; // We use custom titles above canvas
+    Chart.defaults.color = '#4b5563'; // Default font color (text-slate-600)
+
+    const chartColors = { // Refined palette
+        indigo: 'rgba(79, 70, 229, 0.85)',      // Indigo-600
+        purple: 'rgba(139, 92, 246, 0.85)',     // Purple-500
+        green: 'rgba(16, 185, 129, 0.85)',      // Emerald-500
+        red: 'rgba(239, 68, 68, 0.85)',         // Red-500
+        yellow: 'rgba(245, 158, 11, 0.85)',     // Amber-500
+        blue: 'rgba(59, 130, 246, 0.85)',       // Blue-500
+        pink: 'rgba(236, 72, 153, 0.85)',       // Pink-500
+        teal: 'rgba(20, 184, 166, 0.85)',       // Teal-500
+        orange: 'rgba(249, 115, 22, 0.85)',     // Orange-500
+        sky: 'rgba(14, 165, 233, 0.85)',        // Sky-500
+        rose: 'rgba(244, 63, 94, 0.85)',        // Rose-500
+        lime: 'rgba(132, 204, 22, 0.85)',       // Lime-500
+        cyan: 'rgba(6, 182, 212, 0.85)',        // Cyan-500
+        slate: 'rgba(100, 116, 139, 0.85)'      // Slate-500
+    };
+    // const chartBorderColorsArr = Object.values(chartColors).map(color => color.replace('0.85', '1')); // Not currently used, but available
+
+
+    // Dummy data for VP Dashboard
+    let dummyVendors = []; 
+    // Pre-fill some dummy vendors for immediate dashboard demo (optional)
+    function initializeDummyVendors() {
+        dummyVendors = [
+            { 
+                id: 'v001', name: "Alpha Cyber Solutions", service: "Managed Security Services", email: "contact@alphacyber.com", riskTier: "High", businessCriticality: "Critical", dataShared: ["PII", "Proprietary", "Financial"],
+                serviceCriticalityScore: 9, dataSensitivityScore: 9, geoServiceLocation: "Offshore - India", fourthPartyDeps: "Yes - Critical", lastInternalAuditDate: "2024-02-15", complianceCerts: ["ISO 27001", "SOC 2 Type II"],
+                checklist: JSON.parse(JSON.stringify(initialChecklistTemplate)).map((item, idx) => ({...item, status: idx < 6 ? "Approved" : (idx < 8 ? "Rejected" : "Pending Auditor Review"), auditorRemark: idx === 6 ? "Policy outdated" : (idx === 7 ? "Training logs incomplete" : "") })),
+            },
+            { 
+                id: 'v002', name: "Beta Cloud Storage", service: "Cloud Data Backup", email: "info@betacloud.com", riskTier: "Medium", businessCriticality: "Important", dataShared: ["Financial", "Proprietary"],
+                serviceCriticalityScore: 7, dataSensitivityScore: 8, geoServiceLocation: "Onshore", fourthPartyDeps: "Yes - Non-Critical", lastInternalAuditDate: "2024-03-20", complianceCerts: ["SOC 2 Type II"],
+                checklist: JSON.parse(JSON.stringify(initialChecklistTemplate)).map((item, idx) => ({...item, status: idx < 8 ? "Approved" : "Rejected", auditorRemark: idx === 8 ? "Vulnerability scan overdue": "" })),
+            },
+            { 
+                id: 'v003', name: "Gamma Marketing Suite", service: "Digital Marketing Platform", email: "support@gammasuite.com", riskTier: "Low", businessCriticality: "Supportive", dataShared: [],
+                serviceCriticalityScore: 4, dataSensitivityScore: 3, geoServiceLocation: "Nearshore", fourthPartyDeps: "No", lastInternalAuditDate: "", complianceCerts: [],
+                checklist: JSON.parse(JSON.stringify(initialChecklistTemplate)).map(item => ({...item, status: "Approved"})),
+            },
+            { 
+                id: 'v004', name: "Delta HR Solutions", service: "HR Management Software", email: "sales@deltahr.com", riskTier: "Medium", businessCriticality: "Important", dataShared: ["PII"],
+                serviceCriticalityScore: 6, dataSensitivityScore: 7, geoServiceLocation: "Onshore", fourthPartyDeps: "No", lastInternalAuditDate: "2023-12-01", complianceCerts: ["ISO 27001"],
+                checklist: JSON.parse(JSON.stringify(initialChecklistTemplate)).map((item, idx) => ({...item, status: idx < 5 ? "Approved" : (idx < 7 ? "Pending Auditor Review" : "Rejected"), auditorRemark: idx === 7 ? "Physical security docs missing" : "" })),
+            }
         ];
+        // Calculate derived fields for pre-filled dummy vendors
+        dummyVendors.forEach(vendor => {
+            vendor.calculatedRiskScore = calculateOverallRiskScore(vendor, vendor.checklist);
+            vendor.businessImpactScore = (vendor.serviceCriticalityScore || 5) * 10; // Simple impact score
+            vendor.riskTrend = generateDummyRiskTrendData(vendor.calculatedRiskScore);
+            vendor.complianceHealth = calculateVendorComplianceHealth(vendor.checklist);
+        });
+    }
+    initializeDummyVendors(); // Call this to pre-populate for demo purposes
 
-        const mockComplianceItems = [
-            { regulation: 'ISO 27001:2022', status: 'Compliant', dueDate: 'N/A' },
-            { regulation: 'GDPR', status: 'Pending Review', dueDate: '2025-04-30' },
-            { regulation: 'SOX Act', status: 'Non-Compliant', dueDate: 'N/A' },
-            { regulation: 'PCI DSS v4.0', status: 'In Progress', dueDate: '2025-06-15' },
-            { regulation: 'Internal Code of Conduct', status: 'Compliant', dueDate: 'N/A' },
-        ];
 
-         const mockAudits = [
-            { id: 'A001', name: 'IT General Controls Q1', status: 'Completed', findings: 0, dueDate: '2025-03-31' },
-            { id: 'A002', name: 'Financial Statement Audit FY24', status: 'In Progress', findings: 2, dueDate: '2025-05-10' },
-            { id: 'A003', name: 'Vendor Risk Assessment (High Tier)', status: 'Planned', findings: 0, dueDate: '2025-06-01' },
-            { id: 'A004', name: 'Business Continuity Plan Test', status: 'Completed', findings: 1, dueDate: '2025-02-28' },
-         ];
+    // --- Navigation & Section Management ---
+    const sections = ['home-section', 'tprm-vendor-form-section', 'tprm-vendor-checklist-section', 
+                      'auditor-review-checklist-section', 'vendor-assessment-outcome-section', 
+                      'vp-dashboard-section'];
+    const navLinksMap = { 
+        'nav-home': 'home-section', 'nav-tprm': 'tprm-vendor-form-section', 'nav-vp-dashboard': 'vp-dashboard-section',
+    };
 
-         const mockPolicies = [
-            { id: 'POL001', title: 'Information Security Policy', version: '3.1', owner: 'CISO', status: 'Active', reviewDate: '2025-10-01' },
-            { id: 'POL002', title: 'Code of Conduct', version: '2.0', owner: 'HR', status: 'Active', reviewDate: '2026-01-15' },
-            { id: 'POL003', title: 'Data Privacy Policy', version: '1.5', owner: 'DPO', status: 'Active', reviewDate: '2025-07-01' },
-            { id: 'POL004', title: 'Remote Work Policy', version: '1.0', owner: 'HR', status: 'Draft', reviewDate: '2025-05-20' },
-         ];
+    function setActiveNavLink(activeId) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('nav-link-active');
+            if (link.id === activeId) {
+                link.classList.add('nav-link-active');
+            }
+        });
+    }
 
-        // --- Helper Functions ---
-        function getStatusBadgeClass(status) {
-            if (!status) return 'status-low'; // Default if status is undefined/null
-            status = status.toLowerCase();
-            if (status.includes('high') || status.includes('non-compliant')) return 'status-high';
-            if (status.includes('medium') || status.includes('pending') || status.includes('draft')) return 'status-medium';
-            if (status.includes('low') || status.includes('compliant') || status.includes('active') || status.includes('completed')) return 'status-low'; // Use low for compliant/active too
-            if (status.includes('in progress')) return 'status-inprogress';
-            if (status.includes('planned')) return 'status-pending'; // Use pending for planned
-            if (status.includes('open')) return 'status-open';
-            if (status.includes('closed')) return 'status-closed';
-            return 'status-low'; // Default
+    function showSection(sectionId, navIdToActivate = null) {
+        // console.log("Attempting to show section:", sectionId); 
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+        const activeSection = document.getElementById(sectionId);
+        if (activeSection) {
+            activeSection.classList.remove('hidden');
+        } else {
+            console.error(`Section not found: ${sectionId}. Defaulting to home.`);
+            document.getElementById('home-section').classList.remove('hidden');
+            setActiveNavLink('nav-home');
+            return;
         }
+        
+        let actualNavId = navIdToActivate;
+        if (!actualNavId) { 
+            if (['tprm-vendor-form-section', 'tprm-vendor-checklist-section', 
+                 'auditor-review-checklist-section', 'vendor-assessment-outcome-section'].includes(sectionId)) {
+                actualNavId = 'nav-tprm';
+            } else if (sectionId === 'vp-dashboard-section') {
+                actualNavId = 'nav-vp-dashboard';
+            } else if (sectionId === 'home-section') {
+                actualNavId = 'nav-home';
+            }
+        }
+        
+        if (actualNavId) setActiveNavLink(actualNavId);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-        function createActionButtons() {
-             // Simple placeholder action buttons
-            return `
-                <button class="text-primary hover:text-primary-dark text-xs font-medium mr-2">View</button>
-                <button class="text-gray-500 hover:text-gray-700 text-xs font-medium">Edit</button>
+    function attemptShowVPDashboard() {
+        showSection('vp-dashboard-section', 'nav-vp-dashboard'); 
+        if (dummyVendors.length === 0) {
+            document.getElementById('vp-dashboard-content').classList.add('hidden'); 
+            document.getElementById('vp-dashboard-no-data').classList.remove('hidden'); 
+        } else {
+            // Ensure content is visible before loading data, which might take a moment
+            document.getElementById('vp-dashboard-content').classList.remove('hidden');
+            document.getElementById('vp-dashboard-no-data').classList.add('hidden');
+            loadVPDashboardData(); 
+        }
+    }
+    
+    // --- TPRM Form Handling ---
+    document.getElementById('vendor-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const sharedData = Array.from(document.querySelectorAll('input[name="dataType"]:checked')).map(cb => cb.value);
+        const certs = Array.from(document.querySelectorAll('input[name="complianceCert"]:checked')).map(cb => cb.value);
+
+        currentVendorData = {
+            name: document.getElementById('vendorName').value.trim(),
+            service: document.getElementById('serviceProvided').value.trim(),
+            address: document.getElementById('vendorAddress').value.trim(),
+            contactPerson: document.getElementById('contactPerson').value.trim(),
+            email: document.getElementById('contactEmail').value.trim(),
+            contractStart: document.getElementById('contractStartDate').value,
+            contractEnd: document.getElementById('contractEndDate').value,
+            riskTier: document.getElementById('riskTier').value,
+            businessCriticality: document.getElementById('businessCriticality').value,
+            dataShared: sharedData,
+            serviceCriticalityScore: parseInt(document.getElementById('serviceCriticalityScore').value) || 5,
+            dataSensitivityScore: parseInt(document.getElementById('dataSensitivityScore').value) || 5,
+            geoServiceLocation: document.getElementById('geoServiceLocation').value,
+            fourthPartyDeps: document.getElementById('fourthPartyDeps').value,
+            lastInternalAuditDate: document.getElementById('lastInternalAuditDate').value,
+            complianceCerts: certs,
+            id: `v${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+        };
+        
+        document.getElementById('vendor-checklist-vendor-name').textContent = currentVendorData.name;
+        checklistItems = JSON.parse(JSON.stringify(initialChecklistTemplate));
+        populateVendorChecklistTable();
+        showSection('tprm-vendor-checklist-section');
+    });
+
+    // --- Vendor Action Checklist ---
+    function populateVendorChecklistTable() { 
+        const tableBody = document.getElementById('vendor-checklist-table-body');
+        tableBody.innerHTML = ''; 
+        checklistItems.forEach((item, index) => {
+            const row = tableBody.insertRow();
+            row.className = "hover:bg-slate-50 transition-colors duration-150";
+            row.innerHTML = `
+                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-600">${index + 1}</td>
+                <td class="px-5 py-4 text-sm text-slate-800 font-medium min-w-[280px]">${item.item}</td>
+                <td class="px-5 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="triggerVendorFileUpload(${item.id})" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 text-xs font-semibold transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                        Upload Document
+                    </button>
+                    <input type="file" id="vendor-file-${item.id}" class="hidden" onchange="handleVendorFileUpload(${item.id}, this)">
+                    ${item.vendorDocName ? `<span class="mt-1.5 ml-1 text-xs text-green-600 block max-w-[200px] truncate" title="${item.vendorDocName}"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 inline mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>${item.vendorDocName}</span>` : ''}
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap text-sm">
+                    <button onclick="openRemarkModal(${item.id}, 'vendor')" class="inline-flex items-center text-amber-600 hover:text-amber-800 text-xs font-semibold transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                        Add/View Remark
+                    </button>
+                    ${item.vendorRemark ? `<p class="mt-1.5 text-xs text-slate-500 max-w-[200px] truncate italic" title="${item.vendorRemark}">"${item.vendorRemark}"</p>` : ''}
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap">
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getVendorStatusColor(item.status).bgColor} ${getVendorStatusColor(item.status).textColor}">
+                        ${item.status}
+                    </span>
+                </td>
             `;
-        }
+        });
+    }
 
-        // --- Populate Data Functions ---
-        function populateRiskTable() {
-            const tableBody = document.getElementById('risk-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = ''; // Clear existing rows
-            mockRisks.forEach(risk => {
-                const row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${risk.id}</td>
-                    <td>${risk.name}</td>
-                    <td>${risk.category}</td>
-                    <td>${risk.score}</td>
-                    <td><span class="status-badge ${getStatusBadgeClass(risk.status)}">${risk.status}</span></td>
-                    <td>${risk.owner}</td>
-                    <td>${createActionButtons()}</td>
-                `;
-            });
+    function getVendorStatusColor(status) { 
+        switch (status) {
+            case "Pending Vendor Action": return { bgColor: 'bg-yellow-100', textColor: 'text-yellow-700' };
+            case "Documents Submitted": return { bgColor: 'bg-sky-100', textColor: 'text-sky-700' };
+            case "Pending Auditor Review": return { bgColor: 'bg-orange-100', textColor: 'text-orange-700' };
+            case "Approved": return { bgColor: 'bg-green-100', textColor: 'text-green-700' };
+            case "Rejected": return { bgColor: 'bg-red-100', textColor: 'text-red-700' };
+            default: return { bgColor: 'bg-slate-100', textColor: 'text-slate-700' };
         }
+    }
+    function triggerVendorFileUpload(itemId) { document.getElementById(`vendor-file-${itemId}`).click(); }
+    function handleVendorFileUpload(itemId, inputElement) { 
+        const file = inputElement.files[0];
+        const item = checklistItems.find(i => i.id === itemId);
+        if (file && item) {
+            item.vendorDocName = file.name;
+            if (item.status === "Pending Vendor Action") item.status = "Documents Submitted";
+            populateVendorChecklistTable();
+        }
+    }
 
-        function populateComplianceList() {
-            const list = document.getElementById('compliance-list');
-             if (!list) return;
-            list.innerHTML = ''; // Clear existing items
-            mockComplianceItems.forEach(item => {
+    // --- Submission Confirmation & Auditor Review ---
+    function openSubmissionConfirmationModal() { document.getElementById('submissionConfirmationModal').style.display = 'block'; }
+    function closeSubmissionConfirmationModal() { document.getElementById('submissionConfirmationModal').style.display = 'none'; }
+    function confirmVendorSubmission() { 
+        closeSubmissionConfirmationModal();
+        checklistItems.forEach(item => {
+            if (item.status !== "Approved" && item.status !== "Rejected") { 
+                 item.status = "Pending Auditor Review";
+            }
+        });
+        document.getElementById('auditor-review-vendor-name').textContent = currentVendorData.name;
+        populateAuditorChecklistTable();
+        updateFinalizeAssessmentButtonState();
+        showSection('auditor-review-checklist-section');
+    }
+    
+    function populateAuditorChecklistTable() {
+        const tableBody = document.getElementById('auditor-checklist-table-body');
+        tableBody.innerHTML = '';
+        checklistItems.forEach((item, index) => {
+            const row = tableBody.insertRow();
+            row.className = "hover:bg-slate-50 transition-colors duration-150";
+            row.innerHTML = `
+                <td class="px-5 py-4 whitespace-nowrap text-sm text-slate-600">${index + 1}</td>
+                <td class="px-5 py-4 text-sm text-slate-800 font-medium min-w-[250px]">${item.item}</td>
+                <td class="px-5 py-4 text-sm text-slate-600 min-w-[250px]">
+                    ${item.vendorDocName ? `Doc: <span class="text-indigo-600 font-semibold">${item.vendorDocName}</span><br>` : '<span class="text-slate-400 italic">No document submitted</span><br>'}
+                    ${item.vendorRemark ? `Vendor Remark: <span class="italic">"${item.vendorRemark}"</span>` : '<span class="text-slate-400 italic">No vendor remark</span>'}
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap min-w-[250px]">
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getVendorStatusColor(item.status).bgColor} ${getVendorStatusColor(item.status).textColor}">
+                        ${item.status}
+                    </span>
+                    ${item.auditorRemark ? `<p class="mt-1.5 text-xs text-red-700 font-semibold">Auditor: ${item.auditorRemark}</p>` : ''}
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button onclick="auditorApproveItem(${item.id})" class="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-3.5 rounded-md text-xs shadow-md transition-all ${item.status === 'Approved' ? 'opacity-60 cursor-not-allowed' : ''}" ${item.status === 'Approved' ? 'disabled' : ''}>Approve</button>
+                    <button onclick="auditorRejectItem(${item.id})" class="bg-red-500 hover:bg-red-600 text-white py-2 px-3.5 rounded-md text-xs shadow-md transition-all ${item.status === 'Rejected' ? 'opacity-60 cursor-not-allowed' : ''}" ${item.status === 'Rejected' ? 'disabled' : ''}>Reject</button>
+                    <button onclick="openRemarkModal(${item.id}, 'auditor')" class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-3.5 rounded-md text-xs shadow-md transition-all">Remark</button>
+                </td>
+            `;
+        });
+         updateFinalizeAssessmentButtonState();
+    }
+
+    function auditorApproveItem(itemId) { 
+        const item = checklistItems.find(i => i.id === itemId);
+        if (item) { item.status = 'Approved'; item.auditorRemark = item.auditorRemark || "Approved by auditor."; populateAuditorChecklistTable(); }
+    }
+    function auditorRejectItem(itemId) { 
+        openRemarkModal(itemId, 'auditor', true, () => { 
+            const item = checklistItems.find(i => i.id === itemId);
+            if (item) { 
+                if (!item.auditorRemark || item.auditorRemark.trim() === "") { 
+                    showAlertModal("Remark Required", "A remark is mandatory when rejecting an item. Please provide a reason.");
+                    return; 
+                }
+                item.status = 'Rejected'; populateAuditorChecklistTable(); 
+            }
+        });
+    }
+    function updateFinalizeAssessmentButtonState() { 
+        const allAudited = checklistItems.every(item => item.status === 'Approved' || item.status === 'Rejected');
+        const finalizeButton = document.getElementById('finalize-assessment-button');
+        finalizeButton.disabled = !allAudited;
+        finalizeButton.classList.toggle('opacity-50', !allAudited);
+        finalizeButton.classList.toggle('cursor-not-allowed', !allAudited);
+    }
+
+    document.getElementById('finalize-assessment-button').addEventListener('click', function() { 
+        if (!this.disabled) {
+            currentVendorData.checklist = JSON.parse(JSON.stringify(checklistItems));
+            currentVendorData.calculatedRiskScore = calculateOverallRiskScore(currentVendorData, currentVendorData.checklist);
+            currentVendorData.businessImpactScore = (currentVendorData.serviceCriticalityScore || 5) * 10; 
+            currentVendorData.riskTrend = generateDummyRiskTrendData(currentVendorData.calculatedRiskScore);
+            currentVendorData.complianceHealth = calculateVendorComplianceHealth(currentVendorData.checklist);
+
+            const existingVendorIndex = dummyVendors.findIndex(v => v.id === currentVendorData.id);
+            if (existingVendorIndex > -1) {
+                dummyVendors[existingVendorIndex] = { ...currentVendorData }; 
+            } else {
+                dummyVendors.push({ ...currentVendorData });
+            }
+            
+            populateVendorOutcomePage();
+            showSection('vendor-assessment-outcome-section'); 
+        }
+    });
+
+    function populateVendorOutcomePage() { 
+        document.getElementById('outcome-vendor-name').textContent = currentVendorData.name;
+        document.getElementById('outcome-risk-score').textContent = currentVendorData.calculatedRiskScore;
+        
+        const riskScore = currentVendorData.calculatedRiskScore;
+        const riskTierEl = document.getElementById('outcome-risk-tier');
+        if (riskScore >= 75) { riskTierEl.textContent = 'High'; riskTierEl.className = 'text-3xl font-bold text-red-600'; }
+        else if (riskScore >= 40) { riskTierEl.textContent = 'Medium'; riskTierEl.className = 'text-3xl font-bold text-amber-600'; }
+        else { riskTierEl.textContent = 'Low'; riskTierEl.className = 'text-3xl font-bold text-green-600'; }
+
+        document.getElementById('outcome-compliance-health').textContent = `${currentVendorData.complianceHealth}%`;
+        
+        const approvedCount = currentVendorData.checklist.filter(i => i.status === 'Approved').length;
+        const rejectedCount = currentVendorData.checklist.filter(i => i.status === 'Rejected').length;
+        const pendingCount = currentVendorData.checklist.length - approvedCount - rejectedCount;
+        document.getElementById('outcome-checklist-summary').textContent = 
+            `${approvedCount} items Approved, ${rejectedCount} items Rejected, ${pendingCount} items Pending/Other.`;
+
+        const rejectedItemsList = document.getElementById('outcome-rejected-items-list');
+        const rejectedItemsContainer = document.getElementById('outcome-rejected-items-container');
+        rejectedItemsList.innerHTML = '';
+        const actualRejectedItems = currentVendorData.checklist.filter(i => i.status === 'Rejected');
+
+        if (actualRejectedItems.length > 0) {
+            actualRejectedItems.forEach(item => {
                 const li = document.createElement('li');
-                li.className = 'flex justify-between items-center text-sm';
-                li.innerHTML = `
-                    <span>${item.regulation}</span>
-                    <span class="status-badge ${getStatusBadgeClass(item.status)}">${item.status}</span>
-                `;
-                list.appendChild(li);
+                li.innerHTML = `<span class="font-semibold">${item.item}:</span> ${item.auditorRemark || "No specific remark."}`;
+                rejectedItemsList.appendChild(li);
             });
+            rejectedItemsContainer.classList.remove('hidden');
+            document.getElementById('outcome-remediation-button').classList.remove('hidden');
+        } else {
+            rejectedItemsContainer.classList.add('hidden');
+            document.getElementById('outcome-remediation-button').classList.add('hidden');
         }
+    }
 
-        function populateAuditTable() {
-            const tableBody = document.getElementById('audit-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = ''; // Clear existing rows
-            mockAudits.forEach(audit => {
-                const row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${audit.id}</td>
-                    <td>${audit.name}</td>
-                    <td><span class="status-badge ${getStatusBadgeClass(audit.status)}">${audit.status}</span></td>
-                    <td>${audit.findings}</td>
-                    <td>${audit.dueDate}</td>
-                    <td>${createActionButtons()}</td>
-                `;
-            });
+    function simulatePDFGeneration() { showAlertModal("Report Generation", `A detailed PDF summary report for ${currentVendorData.name} is being generated (simulated).`); }
+    function simulateRemediation() { showAlertModal("Remediation Tracking", `Remediation tasks for ${currentVendorData.name} have been logged for follow-up (simulated).`); }
+    function concludeAssessment() { 
+        showAlertModal("Assessment Concluded", `The assessment for ${currentVendorData.name} has been concluded and archived.`);
+        currentVendorData = {};
+        checklistItems = [];
+        showSection('home-section', 'nav-home'); 
+    }
+    
+    function calculateOverallRiskScore(vendor, items) { 
+        let score = 0;
+        if (vendor.riskTier === 'High') score += 15; else if (vendor.riskTier === 'Medium') score += 8; else score +=3;
+        score += (vendor.dataSensitivityScore || 0) * 2.5; 
+        score += (vendor.serviceCriticalityScore || 0) * 2.5;
+        if (vendor.fourthPartyDeps === 'Yes - Critical') score += 15; else if (vendor.fourthPartyDeps === 'Yes - Non-Critical') score += 7;
+        const hasISO = (vendor.complianceCerts || []).includes('ISO 27001'); const hasSOC2 = (vendor.complianceCerts || []).includes('SOC 2 Type II');
+        if (!hasISO && !hasSOC2) score += 5; else if (!hasISO || !hasSOC2) score += 2;
+        const rejectedCount = items.filter(i => i.status === 'Rejected').length; 
+        const totalItems = items.length > 0 ? items.length : 1; 
+        score += (rejectedCount / totalItems) * 15; 
+        return Math.min(100, Math.max(0, Math.round(score)));
+    }
+    
+    function calculateVendorComplianceHealth(items) { 
+        if (!items || items.length === 0) return 0;
+        const approvedCount = items.filter(item => item.status === 'Approved').length;
+        return Math.round((approvedCount / items.length) * 100);
+    }
+
+    function generateDummyRiskTrendData(baseScore = 60) { 
+        const quarters = ['Q1', 'Q2', 'Q3', 'Q4']; 
+        const currentYear = new Date().getFullYear(); 
+        let trend = [];
+        let currentScore = Math.max(10, Math.min(90, baseScore)); 
+        for (let i = 0; i < 5; i++) { 
+            let year = currentYear; 
+            let quarterIndex = (quarters.length * 2 - 1 - i) % quarters.length; 
+            if ( (quarters.length * 2 - 1 - i) < quarters.length) year--;
+            currentScore += Math.floor(Math.random() * 15) - 7; 
+            currentScore = Math.min(100, Math.max(0, currentScore)); 
+            trend.unshift({ q: `${quarters[quarterIndex]} '${String(year).slice(-2)}`, score: currentScore });
+        } 
+        return trend;
+    }
+
+    // --- Remark Modal ---
+    let currentRemarkCallback = null;
+    let isAuditorRejectionRemark = false;
+    function openRemarkModal(itemId, userType, isRejection = false, callback = null) { 
+        document.getElementById('remarkItemId').value = itemId; 
+        document.getElementById('remarkUserType').value = userType;
+        const item = checklistItems.find(i => i.id === itemId); 
+        const modalTitle = document.getElementById('remarkModalTitle');
+        const remarkTextarea = document.getElementById('remarkText');
+        if (userType === 'vendor') {
+            modalTitle.textContent = 'Add/Edit Vendor Remark'; 
+            remarkTextarea.value = item ? item.vendorRemark : '';
+            remarkTextarea.placeholder = "Enter your remark for this item...";
+        } else { 
+            modalTitle.textContent = 'Add/Edit Auditor Remark'; 
+            remarkTextarea.value = item ? item.auditorRemark : '';
+            remarkTextarea.placeholder = isRejection ? "Reason for rejection (mandatory)..." : "Enter auditor's remark...";
         }
-
-         function populatePolicyTable() {
-            const tableBody = document.getElementById('policy-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = ''; // Clear existing rows
-            mockPolicies.forEach(policy => {
-                const row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${policy.id}</td>
-                    <td>${policy.title}</td>
-                    <td>${policy.version}</td>
-                    <td>${policy.owner}</td>
-                     <td><span class="status-badge ${getStatusBadgeClass(policy.status)}">${policy.status}</span></td>
-                    <td>${policy.reviewDate}</td>
-                    <td>${createActionButtons()}</td>
-                `;
-            });
-        }
-
-        // --- NEW: Vendor Assessment Form Logic ---
-        let currentAssessmentSummary = ''; // Store summary for mailto link
-
-        // Function to gather form data
-        function getVendorFormData() {
-            const form = document.getElementById('vendor-assessment-form');
-            if (!form) return null;
-
-            const formData = new FormData(form);
-            const data = {};
-            const dataTypes = []; // Handle checkboxes
-            const certifications = []; // Handle checkboxes
-
-            for (let [key, value] of formData.entries()) {
-                // Handle checkboxes specifically
-                if (key === 'data_type') {
-                    dataTypes.push(value);
-                } else if (key === 'certifications') {
-                    certifications.push(value);
+        isAuditorRejectionRemark = isRejection && userType === 'auditor'; 
+        currentRemarkCallback = callback;
+        document.getElementById('remarkModal').style.display = 'block'; 
+        remarkTextarea.focus();
+    }
+    function closeRemarkModal() { 
+        document.getElementById('remarkModal').style.display = 'none'; 
+        document.getElementById('remarkText').value = '';
+        currentRemarkCallback = null; isAuditorRejectionRemark = false;
+    }
+    function saveRemark() { 
+        const itemId = parseInt(document.getElementById('remarkItemId').value); 
+        const userType = document.getElementById('remarkUserType').value;
+        const remarkText = document.getElementById('remarkText').value.trim(); 
+        const item = checklistItems.find(i => i.id === itemId);
+        if (item) {
+            if (userType === 'vendor') { 
+                item.vendorRemark = remarkText; 
+                populateVendorChecklistTable(); 
+            } else { 
+                if (isAuditorRejectionRemark && !remarkText) { 
+                    showAlertModal("Remark Required", "A remark is mandatory when rejecting an item."); 
+                    return; 
                 }
-                // Handle other fields (simple key-value)
-                // For fields that might appear multiple times (like 'other' inputs),
-                // this simple approach takes the last one. A more robust solution
-                // might be needed if multiple 'other' fields with the same name exist.
-                else {
-                     // Check if the element is a select and get the text of the selected option
-                    const element = form.elements[key];
-                    if (element && element.tagName === 'SELECT' && element.selectedIndex >= 0) {
-                         // Store both value and text for selects if needed, here storing text for readability
-                         data[key] = element.options[element.selectedIndex].text.replace(/^-- Select .* --$/, '').trim(); // Get text, remove placeholder prefix
-                    } else {
-                         data[key] = value;
-                    }
-                }
-            }
-            // Add collected checkbox values
-            data['data_type'] = dataTypes.join(', ') || 'None Selected';
-            data['certifications'] = certifications.join(', ') || 'None Selected';
-
-            // Clean up empty 'other' fields if the main select wasn't 'other'
-             if (data['service-type'] !== 'Other') delete data['service-type-other'];
-             if (data['integration-method'] !== 'Other') delete data['integration-method-other'];
-             if (data['vendor-profile-type'] !== 'Other') delete data['vendor-profile-type-other'];
-             if (!certifications.includes('other')) delete data['cert-other-details'];
-
-
-            return data;
-        }
-
-        // Function to format data for email body
-        function formatAssessmentSummary(data) {
-            if (!data) return 'No data collected.';
-
-            let summary = "Vendor Assessment Summary:\n";
-            summary += "===========================\n\n";
-
-            // Helper function to add a section
-            const addSection = (title, fields) => {
-                summary += `--- ${title} ---\n`;
-                fields.forEach(key => {
-                    const labelElement = document.querySelector(`label[for="${key}"]`);
-                    const label = labelElement ? labelElement.textContent.replace('*','').trim() : key; // Get label text
-                    const value = data[key] || 'N/A';
-                    summary += `${label}: ${value}\n`;
-                });
-                summary += "\n";
-            };
-
-            // Add sections based on form structure
-            addSection("Vendor Details", ["vendor-name", "vendor-legal-name", "vendor-website", "vendor-address"]);
-            addSection("Vendor SPOC & Services Details", ["vendor-spoc-name", "vendor-spoc-position", "vendor-spoc-phone", "vendor-service-desc"]);
-            addSection("Vendor Service Hosting Details", ["vendor-hosting-details"]);
-            addSection("Vendor On-Boarding Initiating Department", ["business-spoc-name", "reporting-manager-name", "business-spoc-email", "reporting-manager-email", "business-spoc-dept", "dept-head-name", "business-spoc-phone", "dept-head-email"]);
-            addSection("Service & Integration Details", ["service-type", "service-type-other", "integration-method", "integration-method-other", "data-flow-direction"]);
-            addSection("Data Handling & Security", ["data_type", "data-classification-max", "data-residency"]);
-            addSection("Vendor Profile & Criticality", ["vendor-profile-type", "vendor-profile-type-other", "vendor-profile-criticality"]);
-            addSection("Compliance & Audit Information", ["certifications", "cert-other-details", "audit-summary-details"]);
-
-            return summary;
-        }
-
-        // Function to show/hide the modal
-        function toggleModal(show) {
-            const modal = document.getElementById('email-summary-modal');
-            if (modal) {
-                if (show) {
-                    modal.classList.add('active');
-                } else {
-                    modal.classList.remove('active');
+                item.auditorRemark = remarkText;
+                 if (currentRemarkCallback) { 
+                    currentRemarkCallback(); 
+                } else { 
+                    populateAuditorChecklistTable(); 
                 }
             }
+        } 
+        closeRemarkModal();
+    }
+    
+    // --- VP Dashboard ---
+    let isLoadingVPDashboard = false; // Guard flag
+
+    function loadVPDashboardData() {
+        // console.count("loadVPDashboardData called"); // For debugging loop calls
+        if (isLoadingVPDashboard) {
+            // console.warn("VP Dashboard loading already in progress. Skipping subsequent call.");
+            return;
         }
+        isLoadingVPDashboard = true;
+        
+        try {
+            if (dummyVendors.length === 0) { 
+                document.getElementById('vp-dashboard-content').classList.add('hidden');
+                document.getElementById('vp-dashboard-no-data').classList.remove('hidden');
+                isLoadingVPDashboard = false; 
+                return;
+            }
+            document.getElementById('vp-dashboard-content').classList.remove('hidden');
+            document.getElementById('vp-dashboard-no-data').classList.add('hidden');
 
+            updateKRIValues(); 
+            generateVPRiskDistributionHistogram(); 
+            generateVPComplianceHotspotsChart(); 
+            generateVPDataSensitivityCriticalityBubbleChart(); 
+            generateVPRiskTierPieChart();
+            generateVPComplianceBarChart();
+            generateVPRiskMatrixScatterChart(); 
+            generateVPCertificationsBarChart(); 
+            populateVPVendorListTable();
+            document.getElementById('vp-selected-vendor-details-section').classList.add('hidden');
+        } catch (error) {
+            console.error("Error during VP Dashboard loading:", error);
+            showAlertModal("Dashboard Error", "An error occurred while loading the VP Dashboard. Details: " + error.message);
+            document.getElementById('vp-dashboard-content').classList.add('hidden');
+            const noDataEl = document.getElementById('vp-dashboard-no-data');
+            noDataEl.classList.remove('hidden'); 
+            noDataEl.querySelector('h3').textContent = "Dashboard Load Error";
+            noDataEl.querySelector('p').textContent = "Could not load dashboard data. Please try again or contact support.";
+        } finally {
+            isLoadingVPDashboard = false; 
+        }
+    }
+    
+    function updateKRIValues() { 
+        const totalVendors = dummyVendors.length; 
+        if (totalVendors === 0) return; 
+        let totalRiskScore = 0; let totalApprovedItems = 0; let totalChecklistItems = 0;
+        let highRiskCount = 0; let criticalDepsCount = 0;
+        dummyVendors.forEach(v => {
+            totalRiskScore += v.calculatedRiskScore || 0;
+            const approved = (v.checklist || []).filter(i => i.status === 'Approved').length;
+            totalApprovedItems += approved; 
+            totalChecklistItems += (v.checklist || []).length;
+            if ((v.calculatedRiskScore || 0) >= 75) highRiskCount++;
+            if (v.fourthPartyDeps === 'Yes - Critical') criticalDepsCount++;
+        });
+        const avgRiskScore = totalVendors > 0 ? Math.round(totalRiskScore / totalVendors) : 0;
+        const overallComplianceHealth = totalChecklistItems > 0 ? Math.round((totalApprovedItems / totalChecklistItems) * 100) : 0;
+        document.getElementById('kri-avg-risk-score').textContent = avgRiskScore;
+        const complianceEl = document.getElementById('kri-compliance-health');
+        complianceEl.textContent = `${overallComplianceHealth}%`;
+        complianceEl.className = `kri-value ${overallComplianceHealth >= 80 ? 'good-compliance' : (overallComplianceHealth < 50 ? 'high-risk' : '')}`;
+        const highRiskEl = document.getElementById('kri-high-risk-vendors');
+        highRiskEl.textContent = highRiskCount;
+        highRiskEl.className = `kri-value ${highRiskCount > 0 ? 'high-risk' : 'good-compliance'}`;
+        document.getElementById('kri-critical-deps').textContent = criticalDepsCount;
+    }
 
-        // --- Navigation Logic ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const sidebarLinks = document.querySelectorAll('.sidebar-link');
-            const contentSections = document.querySelectorAll('.content-section');
-            const pageTitle = document.getElementById('page-title');
+    function generateVPRiskDistributionHistogram() { 
+        const riskBuckets = { '0-20 (Low)': 0, '21-40 (Low)': 0, '41-60 (Med)': 0, '61-80 (High)': 0, '81-100 (Crit)': 0 };
+        dummyVendors.forEach(v => { 
+            const score = v.calculatedRiskScore || 0; 
+            if (score <= 20) riskBuckets['0-20 (Low)']++; 
+            else if (score <= 40) riskBuckets['21-40 (Low)']++;
+            else if (score <= 60) riskBuckets['41-60 (Med)']++; 
+            else if (score <= 80) riskBuckets['61-80 (High)']++;
+            else riskBuckets['81-100 (Crit)']++; 
+        });
+        if (vpRiskDistributionHistogramInstance) vpRiskDistributionHistogramInstance.destroy();
+        vpRiskDistributionHistogramInstance = new Chart(document.getElementById('vp-risk-distribution-histogram').getContext('2d'), { 
+            type: 'bar', 
+            data: { 
+                labels: Object.keys(riskBuckets), 
+                datasets: [{ 
+                    label: 'Number of Vendors', 
+                    data: Object.values(riskBuckets), 
+                    backgroundColor: [chartColors.green, chartColors.lime, chartColors.yellow, chartColors.orange, chartColors.red], 
+                    borderRadius: 4, 
+                    barPercentage: 0.7 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, 
+                plugins: {legend: {display: false}} 
+            } 
+        });
+    }
 
-            // Function to switch active section
-            function switchSection(targetId) {
-                contentSections.forEach(section => {
-                    section.classList.remove('active');
-                });
-                const activeSection = document.getElementById(targetId);
-                if (activeSection) {
-                    activeSection.classList.add('active');
-                    // Update page title
-                    const activeLink = document.querySelector(`.sidebar-link[data-target="${targetId}"]`);
-                    pageTitle.textContent = activeLink ? activeLink.textContent.trim() : 'Dashboard';
+    function generateVPComplianceHotspotsChart() { 
+        const hotspotCounts = {}; 
+        initialChecklistTemplate.forEach(templateItem => { 
+            hotspotCounts[templateItem.item] = { rejected: 0, pending: 0 }; 
+        });
+        dummyVendors.forEach(vendor => { 
+            (vendor.checklist || []).forEach(item => {
+                if (hotspotCounts[item.item]) { 
+                    if (item.status === 'Rejected') hotspotCounts[item.item].rejected++;
+                    else if (['Pending Auditor Review', 'Pending Vendor Action', 'Documents Submitted'].includes(item.status) ) { 
+                        hotspotCounts[item.item].pending++; 
+                    }
                 }
+            }); 
+        });
+        const labels = Object.keys(hotspotCounts).filter(key => hotspotCounts[key].rejected > 0 || hotspotCounts[key].pending > 0); 
+        const chartCanvas = document.getElementById('vp-compliance-hotspots-chart');
+        if (labels.length === 0) { 
+            if(chartCanvas) chartCanvas.style.display = 'none'; 
+            if (vpComplianceHotspotsChartInstance) {
+                vpComplianceHotspotsChartInstance.destroy(); 
+                vpComplianceHotspotsChartInstance = null;
+            } 
+            return; 
+        }
+        if(chartCanvas) chartCanvas.style.display = 'block'; 
+        const rejectedData = labels.map(label => hotspotCounts[label].rejected); 
+        const pendingData = labels.map(label => hotspotCounts[label].pending);
+        if (vpComplianceHotspotsChartInstance) vpComplianceHotspotsChartInstance.destroy();
+        vpComplianceHotspotsChartInstance = new Chart(chartCanvas.getContext('2d'), { 
+            type: 'bar', 
+            data: { 
+                labels: labels.map(l => l.length > 30 ? l.substring(0,27)+'...' : l), 
+                datasets: [ 
+                    { label: 'Rejected', data: rejectedData, backgroundColor: chartColors.red, borderRadius: 4 }, 
+                    { label: 'Pending', data: pendingData, backgroundColor: chartColors.yellow, borderRadius: 4 } 
+                ] 
+            }, 
+            options: { 
+                indexAxis: 'y', 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    x: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }  }, 
+                    y: { stacked: true, ticks: { autoSkip: false } } 
+                }, 
+                plugins: {legend: {display: true}} 
+            } 
+        });
+    }
+    
+    function generateVPDataSensitivityCriticalityBubbleChart() { 
+        const bubbleData = dummyVendors.map(v => ({ 
+            x: v.dataSensitivityScore || 0, 
+            y: v.serviceCriticalityScore || 0, 
+            r: (v.calculatedRiskScore || 0) / 6 + 4, 
+            label: v.name, 
+            riskTierVal: (v.calculatedRiskScore || 0) 
+        }));
+        if (vpDataSensitivityCriticalityBubbleChartInstance) vpDataSensitivityCriticalityBubbleChartInstance.destroy();
+        vpDataSensitivityCriticalityBubbleChartInstance = new Chart(document.getElementById('vp-data-sensitivity-criticality-bubble-chart').getContext('2d'), { 
+            type: 'bubble', 
+            data: { 
+                datasets: [{ 
+                    label: 'Vendors', 
+                    data: bubbleData, 
+                    backgroundColor: bubbleData.map(d => d.riskTierVal >= 75 ? chartColors.red : d.riskTierVal >= 40 ? chartColors.yellow : chartColors.green), 
+                    borderColor: bubbleData.map(d => d.riskTierVal >= 75 ? chartColors.red.replace('0.85', '1') : d.riskTierVal >= 40 ? chartColors.yellow.replace('0.85', '1') : chartColors.green.replace('0.85', '1')), 
+                    borderWidth: 1.5, 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: {  
+                    x: { title: { display: true, text: 'Data Sensitivity (1-10)', font: {size: 11}}, min:0, max:10.5, ticks: {stepSize: 1} }, 
+                    y: { title: { display: true, text: 'Service Criticality (1-10)', font: {size: 11}}, min:0, max:10.5, ticks: {stepSize: 1} }  
+                }, 
+                plugins: { 
+                    tooltip: { callbacks: { label: (context) => `${context.raw.label}: Risk Score ${context.raw.riskTierVal}` } }, 
+                    legend: {display: false} 
+                } 
+            } 
+        });
+    }
 
-                // Update active link style
-                sidebarLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('data-target') === targetId) {
-                        link.classList.add('active');
-                    }
-                });
+    function generateVPRiskTierPieChart() { 
+        const riskCounts = dummyVendors.reduce((acc, vendor) => { 
+            const tier = (vendor.calculatedRiskScore || 0) >= 75 ? 'High Risk' : (vendor.calculatedRiskScore || 0) >= 40 ? 'Medium Risk' : 'Low Risk'; 
+            acc[tier] = (acc[tier] || 0) + 1; 
+            return acc; 
+        }, {});
+        if (vpRiskTierPieChartInstance) vpRiskTierPieChartInstance.destroy();
+        vpRiskTierPieChartInstance = new Chart(document.getElementById('vp-risk-tier-pie-chart').getContext('2d'), { 
+            type: 'doughnut', 
+            data: { 
+                labels: Object.keys(riskCounts), 
+                datasets: [{ 
+                    data: Object.values(riskCounts), 
+                    backgroundColor: [chartColors.red, chartColors.yellow, chartColors.green, chartColors.blue], 
+                    borderWidth: 2, 
+                    borderColor: '#fff' 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                cutout: '60%' 
+            } 
+        });
+    }
+
+    function generateVPComplianceBarChart() { 
+        let approved = 0, rejected = 0, pending = 0; 
+        dummyVendors.forEach(vendor => { 
+            (vendor.checklist || []).forEach(item => { 
+                if (item.status === 'Approved') approved++; 
+                else if (item.status === 'Rejected') rejected++; 
+                else if (item.status !== 'Approved' && item.status !== 'Rejected') pending++; 
+            }); 
+        });
+        if (vpComplianceBarChartInstance) vpComplianceBarChartInstance.destroy();
+        vpComplianceBarChartInstance = new Chart(document.getElementById('vp-compliance-bar-chart'), { 
+            type: 'bar', 
+            data: { 
+                labels: ['Approved Items', 'Rejected Items', 'Pending Review'], 
+                datasets: [{ 
+                    label: 'Total Checklist Items', 
+                    data: [approved, rejected, pending], 
+                    backgroundColor: [chartColors.green, chartColors.red, chartColors.yellow], 
+                    borderRadius: 4, 
+                    barPercentage: 0.6 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, 
+                plugins: {legend: {display: false}} 
+            } 
+        });
+    }
+
+    function generateVPRiskMatrixScatterChart() { 
+        const dataPoints = dummyVendors.map(v => ({ 
+            x: v.businessImpactScore, 
+            y: v.calculatedRiskScore, 
+            label: v.name 
+        }));
+        if (vpRiskMatrixScatterChartInstance) vpRiskMatrixScatterChartInstance.destroy();
+        vpRiskMatrixScatterChartInstance = new Chart(document.getElementById('vp-risk-matrix-scatter-chart').getContext('2d'), { 
+            type: 'scatter', 
+            data: { 
+                datasets: [{ 
+                    label: 'Vendors', 
+                    data: dataPoints, 
+                    backgroundColor: chartColors.indigo, 
+                    pointRadius: 8, 
+                    pointHoverRadius: 10 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    x: { type: 'linear', position: 'bottom', title: { display: true, text: 'Business Impact Score (0-100)' }, min:0, max:100 },  
+                    y: { title: { display: true, text: 'Calculated Risk Score (0-100)' }, min:0, max:100 } 
+                }, 
+                plugins: { 
+                    tooltip: { callbacks: { label: (context) => context.raw.label || '' } }, 
+                    legend: {display: false} 
+                } 
+            } 
+        });
+    }
+
+    function generateVPCertificationsBarChart() { 
+        const certCounts = {}; 
+        dummyVendors.forEach(v => { 
+            (v.complianceCerts || []).forEach(cert => certCounts[cert] = (certCounts[cert] || 0) + 1); 
+        });
+        if (vpCertificationsBarChartInstance) vpCertificationsBarChartInstance.destroy();
+        vpCertificationsBarChartInstance = new Chart(document.getElementById('vp-certifications-bar-chart').getContext('2d'), { 
+            type: 'bar', 
+            data: { 
+                labels: Object.keys(certCounts), 
+                datasets: [{ 
+                    label: 'Vendors with Certification', 
+                    data: Object.values(certCounts), 
+                    backgroundColor: chartColors.teal, 
+                    borderRadius: 4, 
+                    barPercentage: 0.7 
+                }] 
+            }, 
+            options: { 
+                indexAxis: 'y', 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, 
+                plugins: {legend: {display: false}} 
+            } 
+        });
+    }
+    
+    function populateVPVendorListTable() { 
+        const tableBody = document.getElementById('vp-vendor-list-table-body'); 
+        tableBody.innerHTML = '';
+        dummyVendors.forEach(vendor => {
+            const riskScore = vendor.calculatedRiskScore || 0; 
+            const riskTierDisplay = riskScore >= 75 ? 'High' : riskScore >= 40 ? 'Medium' : 'Low';
+            const riskColorClass = riskScore >= 75 ? 'bg-red-100 text-red-700' : riskScore >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
+            const complianceHealth = vendor.complianceHealth !== undefined ? `${vendor.complianceHealth}%` : 'N/A';
+            const healthColorClass = vendor.complianceHealth >= 80 ? 'text-green-600' : vendor.complianceHealth >= 50 ? 'text-amber-600' : 'text-red-600';
+            const row = tableBody.insertRow(); 
+            row.id = `vp-vendor-row-${vendor.id}`;
+            row.className = "hover:bg-slate-50 transition-colors duration-150 cursor-pointer";
+            row.onclick = () => showVPVendorDetails(vendor.id); 
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-800 font-semibold">${vendor.name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${riskColorClass}">
+                        ${riskTierDisplay} (${riskScore})
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${healthColorClass}">${complianceHealth}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <span class="text-indigo-600 hover:text-indigo-800 font-semibold">View Details &rarr;</span>
+                </td>
+            `;
+        });
+    }
+    
+    function showVPVendorDetails(vendorId) { 
+        document.querySelectorAll('#vp-vendor-list-table-body tr').forEach(row => row.classList.remove('selected-vendor-row', 'bg-indigo-100'));
+        document.getElementById(`vp-vendor-row-${vendorId}`)?.classList.add('selected-vendor-row', 'bg-indigo-100');
+        const vendor = dummyVendors.find(v => v.id === vendorId); 
+        if (!vendor) { 
+            document.getElementById('vp-selected-vendor-details-section').classList.add('hidden'); 
+            return; 
+        }
+        document.getElementById('vp-selected-vendor-name').textContent = vendor.name; 
+        document.getElementById('vp-vendor-service').textContent = vendor.service || 'N/A';
+        document.getElementById('vp-vendor-email').textContent = vendor.email || 'N/A'; 
+        document.getElementById('vp-vendor-initial-risk-tier').textContent = vendor.riskTier || 'N/A'; 
+        document.getElementById('vp-vendor-calculated-risk-score').textContent = vendor.calculatedRiskScore !== undefined ? vendor.calculatedRiskScore : 'N/A';
+        document.getElementById('vp-vendor-criticality').textContent = vendor.businessCriticality || 'N/A';
+        document.getElementById('vp-vendor-service-criticality').textContent = vendor.serviceCriticalityScore !== undefined ? `${vendor.serviceCriticalityScore}/10` : 'N/A';
+        document.getElementById('vp-vendor-data-sensitivity').textContent = vendor.dataSensitivityScore !== undefined ? `${vendor.dataSensitivityScore}/10` : 'N/A';
+        document.getElementById('vp-vendor-geo').textContent = vendor.geoServiceLocation || 'N/A'; 
+        document.getElementById('vp-vendor-4th-party').textContent = vendor.fourthPartyDeps || 'N/A';
+        document.getElementById('vp-vendor-certs').textContent = (vendor.complianceCerts || []).join(', ') || 'None Listed';
+        document.getElementById('vp-vendor-compliance-health').textContent = vendor.complianceHealth !== undefined ? `${vendor.complianceHealth}%` : 'N/A';
+        
+        const approved = (vendor.checklist || []).filter(i => i.status === 'Approved').length; 
+        const rejected = (vendor.checklist || []).filter(i => i.status === 'Rejected').length;
+        const pending = (vendor.checklist || []).length - approved - rejected;
+        
+        if (vpVendorDetailPieChartInstance) vpVendorDetailPieChartInstance.destroy();
+        vpVendorDetailPieChartInstance = new Chart(document.getElementById('vp-vendor-detail-pie-chart').getContext('2d'), {
+            type: 'doughnut', 
+            data: { 
+                labels: ['Approved', 'Rejected', 'Pending/Other'], 
+                datasets: [{ 
+                    data: [approved, rejected, pending], 
+                    backgroundColor: [chartColors.green, chartColors.red, chartColors.yellow], 
+                    borderWidth: 2, 
+                    borderColor: '#fff' 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                cutout: '65%', 
+                plugins: { legend: { display: true, labels: {boxWidth:12, font: {size:11}, padding: 10}}} 
             }
-
-            // Add click listeners to sidebar links
-            sidebarLinks.forEach(link => {
-                link.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const targetId = link.getAttribute('data-target');
-                    if (targetId) {
-                        switchSection(targetId);
-                    }
-                });
-            });
-
-            // Initial setup: Show dashboard and populate tables
-            switchSection('dashboard');
-            populateRiskTable();
-            populateComplianceList();
-            populateAuditTable();
-            populatePolicyTable();
-
-            // --- NEW: Event Listeners for Vendor Form & Modal ---
-            const saveButton = document.getElementById('save-assessment-button');
-            const vendorForm = document.getElementById('vendor-assessment-form');
-            const modal = document.getElementById('email-summary-modal');
-            const closeModalButton = document.getElementById('close-modal-button');
-            const cancelModalButton = document.getElementById('cancel-modal-button');
-            const sendEmailButton = document.getElementById('send-email-button');
-            const recipientEmailInput = document.getElementById('recipient-email');
-            const summaryPreviewArea = document.getElementById('summary-preview');
-
-            if (saveButton && vendorForm && modal) {
-                saveButton.addEventListener('click', (event) => {
-                    // Basic validation check (HTML5 required attribute handles most)
-                    if (!vendorForm.checkValidity()) {
-                         // Optionally trigger browser's validation UI explicitly
-                         vendorForm.reportValidity();
-                         return; // Stop if form is invalid
-                    }
-
-                    console.log("Save Assessment Clicked (Prototype - No actual save)");
-                    const formData = getVendorFormData();
-                    currentAssessmentSummary = formatAssessmentSummary(formData); // Store summary
-
-                    // Update preview area in modal
-                    if(summaryPreviewArea) {
-                        summaryPreviewArea.value = currentAssessmentSummary;
-                    }
-
-                    // Show the modal
-                    toggleModal(true);
-                });
+        });
+        
+        if (vpVendorRiskTrendLineChartInstance) vpVendorRiskTrendLineChartInstance.destroy();
+        const trendData = vendor.riskTrend || []; 
+        vpVendorRiskTrendLineChartInstance = new Chart(document.getElementById('vp-vendor-risk-trend-line-chart').getContext('2d'), {
+            type: 'line', 
+            data: { 
+                labels: trendData.map(d => d.q), 
+                datasets: [{ 
+                    label: 'Risk Score', 
+                    data: trendData.map(d => d.score), 
+                    borderColor: chartColors.purple, 
+                    backgroundColor: chartColors.purple.replace('0.85', '0.2'), 
+                    tension: 0.3, 
+                    fill: true, 
+                    pointBackgroundColor: chartColors.purple, 
+                    pointRadius: 4, 
+                    pointHoverRadius: 6 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    y: { beginAtZero: false, suggestedMax: 100, grid: { drawBorder: false } }, 
+                    x: { grid: { display: false } } 
+                }, 
+                plugins: { legend: { display: false }} 
             }
+        });
+        document.getElementById('vp-selected-vendor-details-section').classList.remove('hidden');
+        document.getElementById('vp-selected-vendor-details-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
-            // Modal close buttons
-            if(closeModalButton) {
-                closeModalButton.addEventListener('click', () => toggleModal(false));
-            }
-             if(cancelModalButton) {
-                cancelModalButton.addEventListener('click', () => toggleModal(false));
-            }
+    // --- Alert Modal ---
+    function showAlertModal(title, message) { 
+        document.getElementById('alertModalTitle').textContent = title; 
+        document.getElementById('alertModalMessage').textContent = message;
+        document.getElementById('alertModal').style.display = 'block';
+    }
+    function closeAlertModal() { 
+        document.getElementById('alertModal').style.display = 'none';
+    }
 
-            // Modal overlay click to close
-            if(modal) {
-                modal.addEventListener('click', (event) => {
-                    // Close only if clicking the overlay itself, not the content inside
-                    if (event.target === modal) {
-                        toggleModal(false);
-                    }
-                });
-            }
+    // --- Initial Setup ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setActiveNavLink('nav-home'); 
+        showSection('home-section'); 
+        document.getElementById('nav-home').addEventListener('click', (e) => { e.preventDefault(); showSection('home-section', 'nav-home'); });
+        document.getElementById('nav-tprm').addEventListener('click', (e) => { e.preventDefault(); showSection('tprm-vendor-form-section', 'nav-tprm'); });
+        document.getElementById('nav-vp-dashboard').addEventListener('click', (e) => { e.preventDefault(); attemptShowVPDashboard(); });
+        
+        const footerYearEl = document.querySelector('footer p');
+        if (footerYearEl) footerYearEl.textContent = footerYearEl.textContent.replace('${new Date().getFullYear()}', new Date().getFullYear());
 
-
-            // Send email button logic
-            if (sendEmailButton && recipientEmailInput) {
-                sendEmailButton.addEventListener('click', () => {
-                    const recipient = recipientEmailInput.value.trim();
-                    if (!recipient) {
-                        alert('Please enter a recipient email address.');
-                        return;
-                    }
-                    if (!currentAssessmentSummary) {
-                         alert('No assessment summary available to send.');
-                         return;
-                    }
-
-                    const subject = "Vendor Assessment Summary";
-                    // Encode subject and body for mailto link
-                    const encodedSubject = encodeURIComponent(subject);
-                    const encodedBody = encodeURIComponent(currentAssessmentSummary);
-
-                    // Construct mailto link
-                    const mailtoLink = `mailto:${recipient}?subject=${encodedSubject}&body=${encodedBody}`;
-
-                    // Attempt to open email client
-                    // Note: This might be blocked by pop-up blockers or fail if link is too long
-                    try {
-                         window.location.href = mailtoLink;
-                    } catch (e) {
-                         console.error("Failed to open mailto link:", e);
-                         alert("Could not open email client. The summary might be too long or mailto links are blocked.");
-                    }
-
-
-                    // Close the modal after attempting to send
-                    toggleModal(false);
-                });
-            }
-
-            // --- Optional: JS for conditional 'Other' fields ---
-            // Example for Service Type 'Other' field
-            const serviceTypeSelect = document.getElementById('service-type');
-            const serviceTypeOtherInput = document.getElementById('service-type-other');
-            if (serviceTypeSelect && serviceTypeOtherInput) {
-                serviceTypeSelect.addEventListener('change', function() {
-                    if (this.value === 'other') {
-                        serviceTypeOtherInput.classList.remove('hidden');
-                        serviceTypeOtherInput.required = true; // Make required if shown
-                    } else {
-                        serviceTypeOtherInput.classList.add('hidden');
-                        serviceTypeOtherInput.required = false; // Not required if hidden
-                        serviceTypeOtherInput.value = ''; // Clear value when hidden
-                    }
-                });
-            }
-             // Repeat similar logic for integration-method and vendor-profile-type 'Other' fields if needed
-
-        }); // End DOMContentLoaded
-
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('remarkModal')) closeRemarkModal();
+            if (event.target == document.getElementById('submissionConfirmationModal')) closeSubmissionConfirmationModal();
+            if (event.target == document.getElementById('alertModal')) closeAlertModal();
+        }
+    });
     </script>
 
+   
+  
 </body>
 </html>
